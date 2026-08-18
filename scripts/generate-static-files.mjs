@@ -14,11 +14,57 @@
  * Run: npm run build (wired in as a prebuild step) or `npm run seo:generate`
  * on its own to regenerate without a full build.
  */
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { adsTxt, robotsTxt, sitemapXml } from "../app/lib/static-files.ts";
 
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const PUBLIC_DIR = fileURLToPath(new URL("../public/", import.meta.url));
+
+/**
+ * A minimal stand-in for the `.env*` loading `vinext build` does internally.
+ * This script runs standalone via `tsx` — outside that pipeline — so without
+ * this, `NEXT_PUBLIC_SITE_URL` and the ad env vars silently fall back to their
+ * defaults here even on a build that correctly picked them up everywhere else.
+ * That is exactly the gap that shipped a first deploy of this site with every
+ * page pointing at the right canonical origin except robots.txt and
+ * sitemap.xml, which quietly kept advertising the placeholder domain.
+ *
+ * Precedence matches Next.js: `.env.production.local` > `.env.local` >
+ * `.env.production` > `.env`, later files filling in whatever earlier ones
+ * did not already set — never overwriting a value the environment already has
+ * (e.g. from CI secrets).
+ */
+async function loadEnvFile(name) {
+  let text;
+  try {
+    text = await readFile(new URL(name, `file://${ROOT}`), "utf8");
+  } catch {
+    return;
+  }
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] ??= value;
+  }
+}
+
+// Highest-priority file first: `??=` means whichever file sets a key first
+// keeps it, so this order has to run from most to least specific.
+for (const name of [".env.production.local", ".env.local", ".env.production", ".env"]) {
+  await loadEnvFile(name);
+}
+
+const { adsTxt, robotsTxt, sitemapXml } = await import("../app/lib/static-files.ts");
 
 async function write(name, content) {
   const path = `${PUBLIC_DIR}${name}`;

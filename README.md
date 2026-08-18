@@ -257,6 +257,35 @@ Two things worth knowing if you touch this:
 Nothing else about the app depends on a live server, so none of this trades away
 functionality — it just moves when the rendering work happens.
 
+### Deploying
+
+Live at **https://anatomy.vijeron.com**, a Cloudflare Workers custom domain.
+`wrangler.jsonc` declares it (`routes: [{ pattern: "anatomy.vijeron.com",
+custom_domain: true }]`) — Cloudflare provisions the DNS record and the TLS
+certificate for it automatically on deploy, since `vijeron.com` is a zone on
+the same account.
+
+```bash
+npm run deploy
+```
+
+This is `seo:generate` followed by `vinext deploy --name anatomy`, and the
+order matters: **always deploy through this script, not a bare `vinext
+deploy`.** `vinext deploy` runs its own build internally rather than
+`npm run build`, so it never calls `scripts/generate-static-files.mjs` — a bare
+`vinext deploy` silently ships whatever `robots.txt`/`sitemap.xml`/`ads.txt`
+happen to already be sitting in `public/` from the last time someone ran
+`seo:generate` by hand, which is exactly how the first deploy of this site
+briefly went out with the canonical URLs correct everywhere except those three
+files. `npm run seo:generate` (and by extension `npm run deploy`) reads
+`.env.production` itself — see the comment at the top of
+`scripts/generate-static-files.mjs` — since running outside vinext's own build
+pipeline means it doesn't get that env loading for free.
+
+`NEXT_PUBLIC_SITE_URL` lives in `.env.production` (gitignored, not committed —
+see `.env.example`), set to the URL above. Changing the domain means updating
+it there, in `wrangler.jsonc`'s `routes`, and redeploying.
+
 ## Known issues
 
 - On Windows, `next/font/google` under vinext emits absolute `file:///C:/…` URLs

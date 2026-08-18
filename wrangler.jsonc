@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "anatomy",
+  "compatibility_date": "2026-08-18",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "main": "./worker/index.ts",
+  // The site is a static export (see next.config.ts) — Cloudflare serves
+  // dist/client/* directly and never invokes worker/index.ts for a request
+  // that matches a real file. "404-page" tells it to also serve the exported
+  // 404.html itself for anything unmatched, so the one remaining reason to
+  // reach the Worker is the "/" → "/en" redirect worker/index.ts still owns.
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "404-page",
+    "binding": "ASSETS"
+  },
+  // Cloudflare provisions the DNS record and certificate for this domain
+  // automatically on deploy, since vijeron.com is a zone on this account.
+  "routes": [
+    { "pattern": "anatomy.vijeron.com", "custom_domain": true }
+  ]
+}

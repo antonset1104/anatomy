@@ -9,6 +9,7 @@
     "build": "npm run seo:generate && vinext build",
     "build:next": "next build",
     "db:generate": "drizzle-kit generate",
+    "deploy": "npm run seo:generate && vinext deploy --name anatomy",
     "dev": "vinext dev",
     "i18n:audit": "tsx scripts/i18n-audit.mjs",
     "i18n:export": "tsx scripts/i18n-export.mjs",
