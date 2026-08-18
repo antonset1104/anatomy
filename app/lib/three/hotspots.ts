@@ -5,6 +5,10 @@ export type Marker = {
   hotspot: Hotspot;
   dot: THREE.Sprite;
   pulse: THREE.Sprite;
+  /** Pinned name, built lazily the first time labels are switched on. */
+  label: THREE.Sprite | null;
+  /** Width/height of the label texture, so the sprite keeps its proportions. */
+  labelAspect: number;
   /** The point on the mesh this marker belongs to, in pivot space. */
   anchor: THREE.Vector3;
   /** Current facing/occlusion fade, 0–1. */
@@ -31,6 +35,14 @@ const PULSE_SECONDS = 4.5;
 const FLASH_SECONDS = 1.8;
 const FLASH_CORRECT = "#5c9e6b";
 const FLASH_WRONG = "#d1584f";
+/** Cap height of a pinned label, in CSS pixels. */
+const LABEL_PIXELS = 15;
+const DOT_PIXELS = 34;
+
+const LABEL_THEME = {
+  light: { fill: "rgba(255, 252, 246, 0.94)", stroke: "rgba(117, 91, 70, 0.28)", text: "#2f2a27" },
+  dark: { fill: "rgba(18, 21, 30, 0.92)", stroke: "rgba(180, 198, 232, 0.26)", text: "#e8ecf6" },
+} as const;
 
 function rgba(color: THREE.Color, alpha: number) {
   const r = Math.round(color.r * 255);
@@ -93,6 +105,57 @@ function ringTexture() {
 }
 
 /**
+ * A pinned name, drawn as a pill so it stays readable over any tissue colour.
+ * Rendered at 3× and downsampled by the mipmap chain, which is cheaper than a
+ * DOM overlay per structure and needs no per-frame layout.
+ */
+function labelTexture(text: string, accent: string, theme: "light" | "dark") {
+  const scale = 3;
+  const fontSize = 15 * scale;
+  const padX = 11 * scale;
+  const padY = 7 * scale;
+  const dotSize = 6 * scale;
+
+  const measure = document.createElement("canvas").getContext("2d")!;
+  measure.font = `500 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const textWidth = measure.measureText(text).width;
+
+  const width = Math.ceil(textWidth + padX * 2 + dotSize + 6 * scale);
+  const height = Math.ceil(fontSize + padY * 2);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+  const palette = LABEL_THEME[theme];
+  const radius = height / 2;
+
+  ctx.beginPath();
+  ctx.roundRect(1, 1, width - 2, height - 2, radius);
+  ctx.fillStyle = palette.fill;
+  ctx.fill();
+  ctx.lineWidth = 1 * scale;
+  ctx.strokeStyle = palette.stroke;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(padX + dotSize / 2, height / 2, dotSize / 2, 0, TAU);
+  ctx.fillStyle = accent;
+  ctx.fill();
+
+  ctx.font = `500 ${fontSize}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  ctx.fillStyle = palette.text;
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, padX + dotSize + 6 * scale, height / 2 + 1 * scale);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  return { texture, aspect: width / height };
+}
+
+/**
  * Draws the anatomy labels as dots that live in the 3D scene rather than as
  * DOM overlays. Occlusion comes from the depth buffer plus a per-frame facing
  * test, so nothing has to raycast the mesh while the model spins.
@@ -105,6 +168,8 @@ export class HotspotLayer {
   private time = 0;
   private selectedAt = -PULSE_SECONDS;
   private lastSelectedId: string | null = null;
+  private labelsVisible = false;
+  private theme: "light" | "dark" = "light";
   /** Quiz answer feedback. Holds more than one dot so a wrong answer can mark
    *  the miss in red *and* the real answer in green at the same time. */
   private flashes = new Map<string, { correct: boolean; until: number }>();
@@ -166,12 +231,67 @@ export class HotspotLayer {
       pulse.renderOrder = 10;
 
       this.group.add(pulse, dot);
-      this.markers.push({ hotspot, dot, pulse, anchor: anchors[index].clone(), opacity: 0, emphasis: 0 });
+      this.markers.push({
+        hotspot, dot, pulse, label: null, labelAspect: 1,
+        anchor: anchors[index].clone(), opacity: 0, emphasis: 0,
+      });
     });
 
     this.group.position.set(0, 0, 0);
     pivot.add(this.group);
+    if (this.labelsVisible) this.buildLabels();
     this.applyScale();
+  }
+
+  setTheme(theme: "light" | "dark") {
+    if (this.theme === theme) return;
+    this.theme = theme;
+    if (!this.labelsVisible) return;
+    this.destroyLabels();
+    this.buildLabels();
+  }
+
+  setLabelsVisible(visible: boolean) {
+    if (this.labelsVisible === visible) return;
+    this.labelsVisible = visible;
+    if (visible) this.buildLabels();
+    else this.destroyLabels();
+  }
+
+  private buildLabels() {
+    this.markers.forEach((marker) => {
+      if (marker.label) return;
+      const { texture, aspect } = labelTexture(marker.hotspot.label, marker.hotspot.color, this.theme);
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: false,
+          depthTest: false,
+          sizeAttenuation: false,
+          toneMapped: false,
+        }),
+      );
+      // Anchored below its own box, which lifts the pill clear of the dot
+      // without any per-frame world-space maths.
+      sprite.center.set(0.5, -0.55);
+      sprite.renderOrder = 12;
+      sprite.position.copy(marker.dot.position);
+      marker.label = sprite;
+      marker.labelAspect = aspect;
+      this.group.add(sprite);
+    });
+    this.applyScale();
+  }
+
+  private destroyLabels() {
+    this.markers.forEach((marker) => {
+      if (!marker.label) return;
+      marker.label.removeFromParent();
+      marker.label.material.map?.dispose();
+      marker.label.material.dispose();
+      marker.label = null;
+    });
   }
 
   flash(id: string, correct: boolean) {
@@ -190,11 +310,13 @@ export class HotspotLayer {
   }
 
   private applyScale() {
+    const labelScale = (this.pixelScale / DOT_PIXELS) * LABEL_PIXELS * 1.9;
     this.markers.forEach((marker) => {
       // Dots keep most of their size as they fade so they stay readable right
       // up to the silhouette instead of shrinking into specks.
       const scale = this.pixelScale * (1 + marker.emphasis * 0.3) * (0.74 + 0.26 * marker.opacity);
       marker.dot.scale.setScalar(scale);
+      if (marker.label) marker.label.scale.set(labelScale * marker.labelAspect, labelScale, 1);
     });
   }
 
@@ -226,6 +348,7 @@ export class HotspotLayer {
       else this.lift.set(0, 0, 0);
       marker.dot.position.copy(marker.anchor).add(this.lift);
       marker.pulse.position.copy(marker.dot.position);
+      marker.label?.position.copy(marker.dot.position);
 
       marker.dot.getWorldPosition(this.world);
       this.outward.copy(this.world).sub(this.center);
@@ -245,6 +368,12 @@ export class HotspotLayer {
 
       marker.dot.material.opacity = marker.opacity;
       marker.dot.visible = marker.opacity > 0.01;
+      if (marker.label) {
+        // Labels are dropped earlier than dots: a pill crossing the silhouette
+        // reads as belonging to whatever is behind it.
+        marker.label.material.opacity = Math.max(0, marker.opacity * 1.4 - 0.5);
+        marker.label.visible = marker.label.material.opacity > 0.02;
+      }
 
       const pending = this.flashes.get(marker.hotspot.id);
       const flash = pending && this.time < pending.until ? pending : null;
@@ -277,7 +406,7 @@ export class HotspotLayer {
     return settled;
   }
 
-  /** Screen-space picking: six projections, no mesh raycast. */
+  /** Screen-space picking: one projection per marker, no mesh raycast. */
   pick(x: number, y: number, camera: THREE.Camera, width: number, height: number, radius = 24) {
     let best: Marker | null = null;
     let bestDistance = radius;
@@ -308,6 +437,7 @@ export class HotspotLayer {
   }
 
   clear() {
+    this.destroyLabels();
     this.markers.forEach((marker) => {
       marker.dot.material.map?.dispose();
       marker.dot.material.dispose();

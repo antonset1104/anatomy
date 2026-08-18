@@ -1,0 +1,51 @@
+/* -------------------------------------------------------------------- i18n */
+
+/* The 3D scene and the anatomical artwork must never mirror — left and right
+   are anatomically meaningful. Only the surrounding chrome flips. */
+[dir="rtl"] .three-mount canvas,
+[dir="rtl"] .organ-card-image,
+[dir="rtl"] .modal-figure,
+[dir="rtl"] .specimen-stamp,
+[dir="rtl"] .compare-stage .three-mount,
+[dir="rtl"] .organ-glyph { direction: ltr; }
+
+/* Chevrons and arrows point the reading direction. */
+[dir="rtl"] .learning-cards article > button:not(.organ-card-image) svg,
+[dir="rtl"] .related-card svg,
+[dir="rtl"] .system-members svg,
+[dir="rtl"] .link-button svg,
+[dir="rtl"] .button-primary svg { transform: scaleX(-1); }
+
+/* Scripts with taller glyphs need a little more room than the Latin display face. */
+:lang(hi) .organ-item b,
+:lang(ar) .organ-item b { line-height: 1.4; }
+:lang(ar) .brand strong,
+:lang(hi) .brand strong { letter-spacing: 0; }
+
+/* Measurements and Latin terms keep their own direction inside an RTL page —
+   `plaintext` is the CSS equivalent of dir="auto", resolved per line. */
+.key-facts dd,
+.stat-grid dd,
+.compare-table td,
+.view-caption strong,
+.structure-main i,
+.callout-latin,
+.callout-body small { unicode-bidi: plaintext; }
+
+/* CJK platform stacks. These mirror what the web-font classes provide, so the
+   rest of the stylesheet needs no per-script branching. Ordered
+   Apple → Windows → Linux/Android. */
+.font-stack-sc {
+  --font-serif: "Songti SC", "STSong", "SimSun", "Noto Serif CJK SC", "Source Han Serif SC", serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
+}
+
+.font-stack-jp {
+  --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif CJK JP", serif;
+  --font-sans: "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans CJK JP", sans-serif;
+}
+
+.font-stack-kr {
+  --font-serif: "AppleMyungjo", "Nanum Myeongjo", "Batang", "Noto Serif CJK KR", serif;
+  --font-sans: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif;
+}

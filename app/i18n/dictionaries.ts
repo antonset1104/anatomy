@@ -1,10 +1,11 @@
 import type { Dictionary, OrganContentDictionary, UiDictionary } from "./types";
-import { defaultLocale } from "./config";
+import { deepMerge } from "./deep-merge";
+import { ui as enUi } from "./ui/en";
+import { organs as enOrgans } from "./organs/en";
 
 /** Explicit maps keep each locale in its own chunk while staying statically
  *  analysable by both build pipelines (next build and vinext/Vite). */
-const uiLoaders: Record<string, () => Promise<UiDictionary>> = {
-  en: () => import("./ui/en").then((m) => m.ui),
+const uiLoaders: Record<string, () => Promise<unknown>> = {
   es: () => import("./ui/es").then((m) => m.ui),
   hi: () => import("./ui/hi").then((m) => m.ui),
   zh: () => import("./ui/zh").then((m) => m.ui),
@@ -18,8 +19,7 @@ const uiLoaders: Record<string, () => Promise<UiDictionary>> = {
   ko: () => import("./ui/ko").then((m) => m.ui),
 };
 
-const organLoaders: Record<string, () => Promise<OrganContentDictionary>> = {
-  en: () => import("./organs/en").then((m) => m.organs),
+const organLoaders: Record<string, () => Promise<unknown>> = {
   es: () => import("./organs/es").then((m) => m.organs),
   hi: () => import("./organs/hi").then((m) => m.organs),
   zh: () => import("./organs/zh").then((m) => m.organs),
@@ -33,8 +33,19 @@ const organLoaders: Record<string, () => Promise<OrganContentDictionary>> = {
   ko: () => import("./organs/ko").then((m) => m.organs),
 };
 
+/**
+ * English is the base for every locale. Features ship their copy in `en` first
+ * and translations land incrementally without any locale ever rendering a blank
+ * label — the merge fills the gaps.
+ */
 export async function getDictionary(locale: string): Promise<Dictionary> {
-  const ui = await (uiLoaders[locale] ?? uiLoaders[defaultLocale])();
-  const organs = await (organLoaders[locale] ?? organLoaders[defaultLocale])();
-  return { ui, organs };
+  const [uiPatch, organPatch] = await Promise.all([
+    uiLoaders[locale]?.() ?? Promise.resolve(undefined),
+    organLoaders[locale]?.() ?? Promise.resolve(undefined),
+  ]);
+
+  return {
+    ui: deepMerge<UiDictionary>(enUi, uiPatch),
+    organs: deepMerge<OrganContentDictionary>(enOrgans, organPatch),
+  };
 }

@@ -1,91 +1,93 @@
+/**
+ * Server-render checks against the built worker. These run on `dist/`, so they
+ * catch the failures a type-check cannot: a client component imported into the
+ * RSC graph, a dictionary that throws during render, a locale that 404s.
+ */
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
+import { localeCodes } from "../app/i18n/config.ts";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
-
-async function render() {
+async function render(path) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
+    new Request(`http://localhost${path}`, { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
   );
 }
 
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
+test("sends bare visits to the default locale", async () => {
+  const response = await render("/");
+  assert.ok(
+    [301, 302, 307, 308].includes(response.status),
+    `expected a redirect from /, got ${response.status}`,
+  );
+  // The static export has no `redirects()` support to fall back on (see
+  // `next.config.ts`), so this one redirect is hand-written in
+  // `worker/index.ts` as an absolute URL — hence checking the pathname rather
+  // than an exact string match against a relative one.
+  assert.equal(new URL(response.headers.get("location")).pathname, "/en");
+});
+
+test("server-renders the English workspace", async () => {
+  const response = await render("/en");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+  assert.match(html, /<html[^>]*lang="en"/);
+  assert.match(html, /<title>Anatomy Atelier[^<]*<\/title>/i);
+
+  // The shell, not just a loading state: the default specimen and its panels
+  // have to be in the markup before any JavaScript runs.
+  assert.match(html, /Heart/);
+  assert.match(html, /Cor/);
+  assert.match(html, /Left Ventricle/);
+  assert.match(html, /Cardiovascular/);
+
+  // Chrome that the redesign depends on.
+  // The theme is painted from storage before the first frame, so the bootstrap
+  // has to be inline in <head> rather than deferred with the bundle.
+  assert.match(html, /root\.dataset\.theme = theme/, "expected the no-flash theme bootstrap");
+  assert.match(html, /anatomy-atelier:v2/);
+  assert.match(html, /manifest\.webmanifest/);
+  assert.match(html, /Skip to the specimen viewer/);
+  assert.match(html, /role="dialog"|aria-label="3D viewer tools"/);
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
-  ]);
+test("server-renders a translated locale in its own script and direction", async () => {
+  const response = await render("/id");
+  assert.equal(response.status, 200);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+  const html = await response.text();
+  assert.match(html, /<html[^>]*lang="id"/);
+  assert.match(html, /Jantung/);
+  assert.match(html, /Belajar anatomi seperti seorang seniman/);
+  // Structures added after the Indonesian translation landed still resolve,
+  // because English is merged underneath.
+  assert.match(html, /Trunkus pulmonalis/);
+});
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
+test("renders right-to-left locales with dir=rtl", async () => {
+  const response = await render("/ar");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<html[^>]*dir="rtl"/);
+});
 
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
+test("every configured locale renders", async () => {
+  for (const locale of localeCodes) {
+    const response = await render(`/${locale}`);
+    assert.equal(response.status, 200, `/${locale} returned ${response.status}`);
+    const html = await response.text();
+    assert.match(html, new RegExp(`<html[^>]*lang="${locale}"`), `/${locale} rendered the wrong lang`);
+  }
+});
 
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+test("rejects a locale that is not configured", async () => {
+  const response = await render("/xx");
+  assert.equal(response.status, 404);
 });

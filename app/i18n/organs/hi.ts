@@ -1,9 +1,9 @@
-import type { OrganContentDictionary } from "../types";
+import type { OrganContentPatch } from "../types";
 
 // Anatomical terms follow Indian medical-education convention: the standard
 // Hindi term, with the internationally used English/Latin name retained in
 // brackets where students will meet it in exams and clinical practice.
-export const organs: OrganContentDictionary = {
+export const organs: OrganContentPatch = {
   heart: {
     name: "हृदय",
     system: "हृदय-वाहिका तंत्र",

@@ -1,0 +1,144 @@
+/* ------------------------------------------------------------------ tokens
+   One palette per theme, expressed as roles rather than colours, so a component
+   never has to know which theme is active. `data-theme` is written to the root
+   by the app after it resolves the OS preference. */
+
+:root {
+  /* Type ------------------------------------------------------------------ */
+  --font-display: var(--font-serif), "Iowan Old Style", Georgia, serif;
+  --font-body: var(--font-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, monospace;
+
+  --text-3xs: 0.625rem;
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2rem, 2.6vw, 2.75rem);
+  --text-hero: clamp(1.75rem, 2.1vw, 2.6rem);
+
+  --tracking-label: 0.13em;
+
+  /* Space ----------------------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Shape ----------------------------------------------------------------- */
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  /* Motion ---------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.2, 0.85, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast: 140ms;
+  --duration-mid: 260ms;
+  --duration-slow: 420ms;
+
+  /* Fixed hues. These stay put across themes because they carry meaning:
+     structure colours, correct/incorrect, and the brand coral. */
+  --coral: #e8705d;
+  --amber: #d9973a;
+  --azure: #5c8dd6;
+  --mauve: #c98fb8;
+  --violet: #8d6bcc;
+  --sage: #6d9a78;
+  --teal: #4fa4a8;
+  --positive: #4f9666;
+  --negative: #cd5347;
+}
+
+/* ------------------------------------------------------------------- light */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --ink: #2c2724;
+  --ink-strong: #191512;
+  --muted: #857b73;
+  --faint: #a99f96;
+
+  --canvas: #f6efe6;
+  --canvas-deep: #e9ddd0;
+  --surface: rgba(255, 251, 245, 0.86);
+  --surface-solid: #fffbf4;
+  --surface-raised: rgba(255, 255, 255, 0.72);
+  --surface-sunken: rgba(120, 94, 70, 0.05);
+  --surface-hover: rgba(120, 94, 70, 0.07);
+
+  --line: rgba(117, 91, 70, 0.16);
+  --line-strong: rgba(117, 91, 70, 0.28);
+
+  --accent: var(--coral);
+  --accent-ink: #b4503c;
+  --accent-wash: rgba(232, 112, 93, 0.09);
+
+  --shadow-sm: 0 2px 8px rgba(87, 62, 43, 0.06);
+  --shadow-md: 0 12px 30px rgba(80, 56, 38, 0.08);
+  --shadow-lg: 0 26px 70px rgba(63, 42, 28, 0.16);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  --page-background:
+    radial-gradient(120% 80% at 48% -10%, rgba(255, 255, 255, 0.95), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(232, 112, 93, 0.07), transparent 60%),
+    linear-gradient(148deg, #f7f1e8, #fdf9f2 46%, #f1e7da);
+  --stage-background:
+    radial-gradient(circle at 52% 44%, rgba(255, 255, 255, 0.94), rgba(255, 250, 242, 0.7) 46%, rgba(244, 234, 222, 0.72));
+}
+
+/* -------------------------------------------------------------------- dark */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #e6e9f2;
+  --ink-strong: #f7f9ff;
+  --muted: #9aa3b6;
+  --faint: #6e7688;
+
+  --canvas: #0d1016;
+  --canvas-deep: #070910;
+  --surface: rgba(23, 27, 37, 0.82);
+  --surface-solid: #141822;
+  --surface-raised: rgba(46, 53, 70, 0.5);
+  --surface-sunken: rgba(255, 255, 255, 0.035);
+  --surface-hover: rgba(255, 255, 255, 0.07);
+
+  --line: rgba(168, 186, 220, 0.14);
+  --line-strong: rgba(168, 186, 220, 0.28);
+
+  --accent: #f28d78;
+  --accent-ink: #f8a894;
+  --accent-wash: rgba(242, 141, 120, 0.14);
+
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 14px 34px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.6);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  --page-background:
+    radial-gradient(110% 80% at 50% -15%, rgba(88, 108, 154, 0.28), transparent 58%),
+    radial-gradient(80% 60% at 100% 4%, rgba(242, 141, 120, 0.12), transparent 62%),
+    linear-gradient(160deg, #0b0e15, #101521 52%, #090c12);
+  --stage-background:
+    radial-gradient(circle at 52% 44%, rgba(58, 70, 96, 0.55), rgba(18, 22, 32, 0.75) 48%, rgba(9, 12, 18, 0.85));
+}
+
+/* Text-size preference. Scales the whole type scale from one place instead of
+   dotting media queries through the stylesheet. */
+:root[data-text="sm"] { font-size: 13px; }
+:root[data-text="md"] { font-size: 14px; }
+:root[data-text="lg"] { font-size: 15.5px; }

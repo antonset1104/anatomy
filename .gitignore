@@ -30,6 +30,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...except the template: it holds no secrets, just documents what each
+# variable does, and needs to actually be in the repo for that documentation
+# to reach anyone else who clones it.
+!.env.example
 
 # vercel
 .vercel
@@ -41,3 +45,10 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# generated at build time by scripts/generate-static-files.mjs — depends on
+# NEXT_PUBLIC_SITE_URL and the ads env vars, so a stale copy from a different
+# environment should never end up committed. See app/lib/static-files.ts.
+/public/robots.txt
+/public/sitemap.xml
+/public/ads.txt

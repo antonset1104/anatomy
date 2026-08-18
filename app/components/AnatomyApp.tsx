@@ -1,407 +1,619 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
-import {
-  ArrowRight,
-  BookOpen,
-  Bookmark,
-  BrainCircuit,
-  ChevronDown,
-  CircleHelp,
-  Compass,
-  FileText,
-  Globe,
-  Heart,
-  LibraryBig,
-  Microscope,
-  NotebookPen,
-  Play,
-  Search,
-  Share2,
-  Sparkles,
-  Stethoscope,
-  X,
-} from "lucide-react";
-import { OrganViewer } from "./OrganViewer";
+import { ArrowRight, GraduationCap, Microscope, Play, Share2, Sparkles } from "lucide-react";
+import { OrganViewer, type ViewerHandle } from "./OrganViewer";
+import { SpecimenLibrary } from "./SpecimenLibrary";
+import { Inspector, type Tab } from "./Inspector";
+import { TopBar, type TopBarView } from "./TopBar";
+import { CommandPalette, type CommandAction } from "./CommandPalette";
+import { LessonPlayer } from "./LessonPlayer";
+import { QuizLauncher, QuizSession, type QuizConfig } from "./QuizSession";
+import { CompareView } from "./CompareView";
+import { GlossarySheet, LessonsSheet, ProgressSheet, SettingsSheet, ShareSheet, SystemsSheet } from "./Overlays";
+import { ToastStack, useToasts } from "./Toasts";
+import { Measure, OrganArt } from "./primitives";
 import type { OrganId } from "../lib/anatomy-data";
 import type { LocaleConfig } from "../i18n/config";
-import { locales } from "../i18n/config";
-import { buildOrgans, indexOrgans, type Organ } from "../i18n/merge";
-import { format, type Dictionary, type UiDictionary } from "../i18n/types";
+import { buildGlossary, buildOrgans, buildSystems, indexOrgans, type Hotspot, type Organ } from "../i18n/merge";
+import { format, type Dictionary } from "../i18n/types";
+import { actions, hydrate, masteryPercent, newAchievements, subscribeToStore, useStore, type Prefs } from "../lib/store";
+import { buildGrandTour, buildLessons, type Lesson } from "../lib/lessons";
+import { readDeepLink, shareUrl, writeDeepLink, type ViewName } from "../lib/url-state";
 
-type Modal = "lesson" | "quiz" | "animation" | "system" | null;
+type Sheet = "systems" | "glossary" | "lessons" | "progress" | "settings" | "share" | "quiz" | null;
 
 /**
- * Renders an organ illustration, or its accent glyph for organs that ship as a
- * 3D model without the painted asset set. Keeps every image slot filled instead
- * of leaving a broken `<img>` behind.
+ * The OS colour-scheme query, read as an external store. Cached because
+ * `matchMedia` hands back a fresh object each call, and a listener removed from
+ * a different object than it was added to simply leaks.
  */
-function OrganArt({
-  organ,
-  asset,
-  alt,
-  size,
-}: {
-  organ: Organ;
-  asset: "thumb" | "organ" | "microscopic" | "compare" | "location";
-  alt: string;
-  size?: number;
-}) {
-  if (!organ.illustrated) {
-    // An empty alt means a surrounding control already names this, so the
-    // glyph should be skipped rather than announced with no label.
-    const labelling = alt ? { role: "img", "aria-label": alt } : { "aria-hidden": true };
-    return (
-      <span className="art-fallback" style={{ "--art-accent": organ.accent } as React.CSSProperties} {...labelling}>
-        {organ.icon}
-      </span>
-    );
-  }
-  return (
-    <img
-      key={`${organ.id}-${asset}`}
-      src={`/anatomy/${organ.id}/${asset}.webp`}
-      alt={alt}
-      width={size}
-      height={size}
-      loading={asset === "thumb" ? "eager" : "lazy"}
-      decoding="async"
-    />
-  );
+let darkQuery: MediaQueryList | null = null;
+
+function getDarkQuery() {
+  darkQuery ??= window.matchMedia("(prefers-color-scheme: dark)");
+  return darkQuery;
 }
 
-
-/**
- * Measurements like "250–350 g" begin with a digit, which Unicode treats as
- * neutral — inside an RTL paragraph the range gets visually reversed. Digits
- * are not "strong" characters, so `unicode-bidi: plaintext` cannot rescue it;
- * the run has to be isolated as LTR explicitly.
- */
-function Measure({ children }: { children: string }) {
-  return <bdi dir={/^[\d(]/.test(children.trim()) ? "ltr" : "auto"}>{children}</bdi>;
+function subscribeSystemDark(onChange: () => void) {
+  const query = getDarkQuery();
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
 }
 
-/**
- * Switches language by swapping the leading path segment, so the current
- * document is preserved rather than bouncing through the root redirect.
- *
- * The native <select> is stretched transparently over the whole pill rather
- * than sitting inline. A <label> only *focuses* a select when clicked — it does
- * not open it — so anything outside the select's own box (the globe, the
- * chevron, the padding) would otherwise be a dead zone. Overlaying it means a
- * click anywhere on the control opens the picker, while the visible row
- * underneath stays fully styleable.
- */
-function LanguageSwitcher({ locale, t }: { locale: LocaleConfig; t: UiDictionary }) {
-  return (
-    <div className="language-switcher" title={t.language.label}>
-      <Globe size={16} aria-hidden />
-      <span className="language-current">{locale.nativeName}</span>
-      <ChevronDown size={14} aria-hidden />
-      <select
-        aria-label={t.language.choose}
-        value={locale.code}
-        onChange={(event) => {
-          window.location.pathname = `/${event.target.value}`;
-        }}
-      >
-        {locales.map((entry) => (
-          <option key={entry.code} value={entry.code} lang={entry.code}>
-            {entry.nativeName}
-          </option>
-        ))}
-      </select>
-    </div>
+/** Resolves `system` against the OS preference, and keeps following it. */
+function useResolvedTheme(preference: Prefs["theme"]) {
+  const systemDark = useSyncExternalStore(
+    subscribeSystemDark,
+    () => getDarkQuery().matches,
+    () => false,
   );
+  return preference === "system" ? (systemDark ? "dark" : "light") : preference;
 }
 
 export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dictionary: Dictionary }) {
   const t = dictionary.ui;
-  const organs = useMemo(() => buildOrgans(dictionary.organs), [dictionary.organs]);
+  const organs = useMemo(() => buildOrgans(dictionary.organs, t), [dictionary.organs, t]);
   const organById = useMemo(() => indexOrgans(organs), [organs]);
+  const systems = useMemo(() => buildSystems(t), [t]);
+  const glossary = useMemo(() => buildGlossary(organs), [organs]);
+  const lessons = useMemo(
+    () => [buildGrandTour(organs, t.lessons.tourTitle, t.lessons.tourBody), ...buildLessons(organs)],
+    [organs, t.lessons.tourTitle, t.lessons.tourBody],
+  );
+
+  const { progress, prefs, hydrated } = useStore();
+  const theme = useResolvedTheme(prefs.theme);
+  const { toasts, push } = useToasts();
 
   const [organId, setOrganId] = useState<OrganId>("heart");
+  const [compareId, setCompareId] = useState<OrganId>("brain");
   const [autoRotate, setAutoRotate] = useState(true);
-  const [compare, setCompare] = useState(false);
-  const [modal, setModal] = useState<Modal>(null);
-  const [query, setQuery] = useState("");
+  const [sheet, setSheet] = useState<Sheet>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [mobileLibrary, setMobileLibrary] = useState(false);
-  const [quizActive, setQuizActive] = useState(false);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [quiz, setQuiz] = useState<QuizConfig | null>(null);
+  const [selectedHotspot, setSelectedHotspot] = useState<Hotspot | null>(null);
+  const [lastView, setLastView] = useState<ViewName>("anterior");
+  const [inspectorTab, setInspectorTab] = useState<Tab>("overview");
+
+  const viewerRef = useRef<ViewerHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const prefetched = useRef(new Set<OrganId>());
+  const quizPickRef = useRef<(hotspot: Hotspot) => void>(() => {});
+  /**
+   * A structure to focus once a specimen switch currently in flight finishes
+   * loading. `onOrganReady` (fired from the real load-complete event, not a
+   * guessed delay) below consumes this — see the comment on that prop in
+   * `OrganViewer.tsx` for why a fixed timeout was not good enough here: on a
+   * slow connection a GLB can easily take longer than any delay short enough
+   * to not feel sluggish on a fast one, and a hotspot that never gets selected
+   * is a silent miss, not an error.
+   */
+  const pendingFocusRef = useRef<{ organId: OrganId; hotspotId: string } | null>(null);
+  const onOrganReady = useCallback((readyOrganId: OrganId) => {
+    const pending = pendingFocusRef.current;
+    if (pending?.organId !== readyOrganId) return;
+    pendingFocusRef.current = null;
+    viewerRef.current?.selectHotspot(pending.hotspotId, true);
+  }, []);
+
+  // Reduced motion is folded in here rather than pushed into state, so the
+  // learner's own toggle survives turning the preference back off.
+  const spinning = autoRotate && !prefs.reduceMotion;
   const organ = organById[organId];
-  const reference = organById[organId === "heart" ? "brain" : "heart"];
-  const filteredOrgans = useMemo(
+  const compareOrgan = organById[compareId];
+
+  useEffect(() => hydrate(), []);
+
+  // Restore a shared link once, after hydration, so it wins over the default
+  // specimen but never fights the learner's own navigation afterwards. Applied
+  // in a microtask rather than inline: the server rendered the default
+  // specimen, so moving during commit would fight hydration.
+  useEffect(() => {
+    queueMicrotask(() => {
+      const link = readDeepLink(window.location.search);
+      if (link.organ) setOrganId(link.organ);
+      if (link.view) setLastView(link.view);
+      // Consumed by `onOrganReady` once that specimen's model actually
+      // finishes loading — see the comment on `pendingFocusRef` above.
+      if (link.organ && link.hotspot) {
+        pendingFocusRef.current = { organId: link.organ, hotspotId: link.hotspot };
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) actions.visit(organId);
+  }, [organId, hydrated]);
+
+  useEffect(() => {
+    writeDeepLink({ organ: organId, hotspot: selectedHotspot?.id ?? null, view: lastView });
+  }, [organId, selectedHotspot, lastView]);
+
+  // Theme, text size, and the motion preference are document-level, so they are
+  // applied to the root rather than threaded through every component.
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.text = prefs.textSize;
+    document.documentElement.dataset.motion = prefs.reduceMotion ? "reduced" : "full";
+  }, [theme, prefs.textSize, prefs.reduceMotion]);
+
+  // Badges announce themselves once, wherever they were earned. Driven from the
+  // store subscription rather than an effect on `progress`, so the toast lands
+  // on the notification instead of on a render pass.
+  useEffect(
     () =>
-      organs.filter((item) =>
-        `${item.name} ${item.system}`.toLocaleLowerCase(locale.code).includes(query.toLocaleLowerCase(locale.code)),
-      ),
-    [organs, query, locale.code],
+      subscribeToStore(() => {
+        if (!newAchievements.length) return;
+        const earned = newAchievements.splice(0, newAchievements.length);
+        earned.forEach((id) => push(t.achievements[id]?.name ?? id, "award"));
+      }),
+    [push, t.achievements],
   );
 
   useEffect(() => {
-    if (!contentRef.current) return;
-    gsap.fromTo(contentRef.current.querySelectorAll("[data-reveal]"),
+    if (!contentRef.current || prefs.reduceMotion) return;
+    gsap.fromTo(
+      contentRef.current.querySelectorAll("[data-reveal]"),
       { opacity: 0, y: 8 },
       { opacity: 1, y: 0, duration: 0.48, stagger: 0.035, ease: "power2.out", overwrite: true },
     );
-  }, [organId]);
+  }, [organId, prefs.reduceMotion]);
 
-  const selectOrgan = (id: OrganId) => {
-    if (organById[id].illustrated) {
-      ["organ", "microscopic", "compare", "location"].forEach((asset) => {
-        const image = new Image();
-        image.src = `/anatomy/${id}/${asset}.webp`;
-      });
-    }
-    setOrganId(id);
-    setMobileLibrary(false);
-    setCompare(false);
-    setQuizActive(false);
-  };
+  const selectOrgan = useCallback(
+    (id: OrganId) => {
+      if (organById[id].illustrated) {
+        ["organ", "microscopic", "compare", "location"].forEach((asset) => {
+          const image = new Image();
+          image.src = `/anatomy/${id}/${asset}.webp`;
+        });
+      }
+      setOrganId(id);
+      setMobileLibrary(false);
+      setSelectedHotspot(null);
+      setQuiz(null);
+    },
+    [organById],
+  );
 
   // Warms the model in the HTTP cache while the pointer is still travelling,
   // so the switch usually renders without a visible loading pass.
-  const prefetchOrgan = (id: OrganId) => {
-    if (id === organId || prefetched.current.has(id)) return;
-    prefetched.current.add(id);
-    void fetch(organById[id].model, { priority: "low" } as RequestInit).catch(() => {});
+  const prefetchOrgan = useCallback(
+    (id: OrganId) => {
+      if (id === organId || prefetched.current.has(id)) return;
+      prefetched.current.add(id);
+      void fetch(organById[id].model, { priority: "low" } as RequestInit).catch(() => {});
+    },
+    [organId, organById],
+  );
+
+  const openStructure = useCallback(
+    (targetOrgan: OrganId, hotspotId: string) => {
+      if (targetOrgan !== organId) {
+        // Consumed by `onOrganReady` once the new specimen's model has
+        // actually finished loading, not after a guessed delay.
+        pendingFocusRef.current = { organId: targetOrgan, hotspotId };
+        selectOrgan(targetOrgan);
+      } else {
+        viewerRef.current?.selectHotspot(hotspotId, true);
+      }
+    },
+    [organId, selectOrgan],
+  );
+
+  const startLesson = useCallback(
+    (target: Lesson) => {
+      setQuiz(null);
+      setSheet(null);
+      setLesson(target);
+      if (target.organId && target.organId !== organId) selectOrgan(target.organId);
+    },
+    [organId, selectOrgan],
+  );
+
+  const exportNotes = useCallback(() => {
+    const lines = Object.entries(progress.notes).map(([id, note]) => {
+      const name = organById[id as OrganId]?.name ?? id;
+      return `## ${name}\n\n${note.text}\n`;
+    });
+    const blob = new Blob([`# ${t.notes.title}\n\n${lines.join("\n")}`], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "anatomy-atelier-notes.md";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [progress.notes, organById, t.notes.title]);
+
+  // ⌘K / Ctrl+K everywhere, plus a couple of single-key jumps that stay out of
+  // the way of typing.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+      if (typing || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "/") {
+        event.preventDefault();
+        setPaletteOpen(true);
+      }
+      if (event.key === "?") setSheet("glossary");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const paletteActions = useMemo<CommandAction[]>(
+    () => [
+      { id: "systems", label: t.systems.open, run: () => setSheet("systems") },
+      { id: "glossary", label: t.glossary.title, run: () => setSheet("glossary") },
+      { id: "lessons", label: t.lessons.title, run: () => setSheet("lessons") },
+      { id: "progress", label: t.progress.title, run: () => setSheet("progress") },
+      { id: "settings", label: t.settings.title, run: () => setSheet("settings") },
+      { id: "quiz", label: t.quiz.chooseMode, run: () => setSheet("quiz") },
+      { id: "compare", label: t.compare.open, run: () => setCompareOpen(true) },
+      { id: "share", label: t.share.label, run: () => setSheet("share") },
+      { id: "print", label: t.print.button, run: () => window.print() },
+      {
+        id: "theme",
+        label: `${t.theme.label}: ${theme === "dark" ? t.theme.light : t.theme.dark}`,
+        run: () => actions.setPrefs({ theme: theme === "dark" ? "light" : "dark" }),
+      },
+    ],
+    [t, theme],
+  );
+
+  const onNav = (view: TopBarView) => {
+    if (view === "explore") viewerRef.current?.reset();
+    else setSheet(view);
   };
 
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <button className="brand" type="button" onClick={() => selectOrgan("heart")} aria-label={t.brand.home}>
-          <strong>Anatomy Atelier<sup>✦</sup></strong>
-          <em>{t.brand.tagline}</em>
-        </button>
-        <nav className="main-nav" aria-label="Primary navigation">
-          <button className="active"><Compass size={17} /> {t.nav.explore}</button>
-          <button><BrainCircuit size={17} /> {t.nav.systems}</button>
-          <button onClick={() => setModal("lesson")}><BookOpen size={17} /> {t.nav.lessons}</button>
-          <button><LibraryBig size={17} /> {t.nav.library}</button>
-          <button><NotebookPen size={17} /> {t.nav.notes}</button>
-        </nav>
-        <label className="search-box">
-          <Search size={17} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search.placeholder} />
-        </label>
-        <LanguageSwitcher locale={locale} t={t} />
-        <button className="profile" aria-label={t.profile.open}><span>MA</span><ChevronDown size={15} /></button>
-        <button className="mobile-library-trigger" onClick={() => setMobileLibrary(true)} aria-label={t.library.open}><LibraryBig size={20} /></button>
-      </header>
+    <>
+      <a className="skip-link" href="#specimen-stage">{t.brand.skip}</a>
 
-      <div className="workspace">
-        <aside className={`organ-library ${mobileLibrary ? "open" : ""}`}>
-          <div className="panel-heading">
-            <span>{t.library.title}</span>
-            <button aria-label={t.library.close} className="mobile-close" onClick={() => setMobileLibrary(false)}><X size={17} /></button>
-            <button aria-label={t.library.saved}><Bookmark size={17} /></button>
-          </div>
-          <div className="organ-list">
-            {filteredOrgans.map((item) => (
-              <button
-                type="button"
-                key={item.id}
-                className={`organ-item ${organId === item.id ? "active" : ""}`}
-                onClick={() => selectOrgan(item.id)}
-                onPointerEnter={() => prefetchOrgan(item.id)}
-                onFocus={() => prefetchOrgan(item.id)}
-                style={{ "--item-accent": item.accent } as React.CSSProperties}
-              >
-                <span className="organ-glyph">
-                  <OrganArt organ={item} asset="thumb" alt="" size={47} />
-                </span>
-                <span><b>{item.name}</b><small>{item.system}</small></span>
-                {organId === item.id && <Heart className="favorite" size={14} fill="currentColor" />}
-              </button>
-            ))}
-          </div>
-          <button className="view-all" onClick={() => setQuery("")}>{t.library.viewAll} <ArrowRight size={14} /></button>
-          <blockquote>
-            <Sparkles size={18} />
-            <p>{t.library.quoteLine1}<br />{t.library.quoteLine2}</p>
-            <em>{t.library.quoteSign}</em>
-          </blockquote>
-        </aside>
-
-        <OrganViewer
-          organ={organ}
+      <main className="app-shell">
+        <TopBar
           t={t}
-          autoRotate={autoRotate}
-          onAutoRotate={setAutoRotate}
-          compare={compare}
-          onCompare={() => setCompare(!compare)}
-          quizActive={quizActive}
-          onQuizExit={() => setQuizActive(false)}
+          locale={locale}
+          prefs={prefs}
+          streak={progress.streak.count}
+          mastery={masteryPercent(progress)}
+          onCommand={() => setPaletteOpen(true)}
+          onNav={onNav}
+          onTheme={(next) => actions.setPrefs({ theme: next })}
+          onSettings={() => setSheet("settings")}
+          onOpenLibrary={() => setMobileLibrary(true)}
+          onHome={() => selectOrgan("heart")}
         />
 
-        <aside className="info-panel" ref={contentRef}>
-          <div className="info-kicker" data-reveal><Heart size={13} fill="currentColor" /> {format(t.info.kicker, { organ: organ.name })}</div>
-          <div className="info-title-row" data-reveal>
-            <div><h1>{organ.name}</h1><em>{organ.poetic}</em></div>
-            <span className="specimen-stamp">
-              <OrganArt organ={organ} asset="organ" alt="" size={92} />
-            </span>
-          </div>
-          <p className="description" data-reveal>{organ.description}</p>
-          <div className="rule" />
-          <h2 data-reveal>{t.info.keyFacts}</h2>
-          <dl className="key-facts">
-            <div data-reveal><dt><span>◇</span> {t.info.size}</dt><dd><Measure>{organ.size}</Measure></dd></div>
-            <div data-reveal><dt><span>♙</span> {t.info.weight}</dt><dd><Measure>{organ.weight}</Measure></dd></div>
-            <div data-reveal><dt><span>⌁</span> {t.info.daily}</dt><dd><Measure>{organ.dailyFact}</Measure></dd></div>
-            <div data-reveal><dt><span>⌖</span> {t.info.location}</dt><dd><Measure>{organ.location}</Measure></dd></div>
-            <div data-reveal><dt><span>❋</span> {t.info.bloodSupply}</dt><dd><Measure>{organ.bloodSupply}</Measure></dd></div>
-            <div data-reveal><dt><span>◈</span> {t.info.function}</dt><dd><Measure>{organ.function}</Measure></dd></div>
-          </dl>
-          <div className="medical-note" data-reveal><Stethoscope size={16} /><p><b>{t.info.medical}</b>{organ.medical}</p></div>
-          <div className="fun-note" data-reveal><Sparkles size={15} /><p><b>{t.info.didYouKnow}</b>{organ.funFact}</p></div>
-          <button className="lesson-button" data-reveal onClick={() => setModal("lesson")}>{t.info.viewLesson} <ArrowRight size={16} /></button>
-          <div className="action-grid" data-reveal>
-            <button onClick={() => setModal("animation")}><Play size={15} /> {t.info.animate}</button>
-            <button onClick={() => { setQuizActive(true); setModal(null); }}><CircleHelp size={15} /> {t.info.quiz}</button>
-            <button onClick={() => setCompare(!compare)} className={compare ? "active" : ""}><Share2 size={15} /> {t.info.compare}</button>
-          </div>
-        </aside>
-      </div>
+        <div className="workspace" id="specimen-stage">
+          <SpecimenLibrary
+            t={t}
+            locale={locale.code}
+            organs={organs}
+            systems={systems}
+            progress={progress}
+            activeId={organId}
+            open={mobileLibrary}
+            onSelect={selectOrgan}
+            onPrefetch={prefetchOrgan}
+            onClose={() => setMobileLibrary(false)}
+          />
 
-      {compare && (
-        <section className="compare-strip" aria-label={t.compare.title}>
-          <div className="compare-organ"><OrganArt organ={organ} asset="thumb" alt="" /><span>{t.compare.comparing}</span><strong>{organ.name}</strong><small>{organ.system}</small></div>
-          <b>{t.compare.vs}</b>
-          <div className="compare-organ"><OrganArt organ={reference} asset="thumb" alt="" /><span>{t.compare.reference}</span><strong>{reference.name}</strong><small>{reference.system}</small></div>
-          <dl><div><dt>{t.compare.primaryRole}</dt><dd><Measure>{organ.function}</Measure></dd></div><div><dt>{t.compare.scale}</dt><dd><Measure>{organ.size}</Measure></dd></div></dl>
-          <button onClick={() => setCompare(false)} aria-label={t.compare.close}><X size={16} /></button>
-        </section>
-      )}
-
-      <section className="learning-cards" aria-label={format(t.cards.resources, { organ: organ.name })}>
-        <article className="curiosity-card">
-          <span>✿</span><p>{t.library.quoteLine1}<br />{t.library.quoteLine2}</p><em>{t.library.quoteSign}</em>
-        </article>
-        <article>
-          <header><div><em>{t.cards.microscopic}</em><h3>{organ.tissue}</h3></div><Microscope size={17} /></header>
-          <div className="microscope-visual organ-card-image"><OrganArt organ={organ} asset="microscopic" alt="" /></div>
-          <button onClick={() => setModal("lesson")}>{t.cards.exploreTissue} <ArrowRight size={14} /></button>
-        </article>
-        <article>
-          <header><div><em>{t.cards.compareOrgans}</em><h3>{organ.comparison}</h3></div><Share2 size={17} /></header>
-          <div className="comparison-visual organ-card-image"><OrganArt organ={organ} asset="compare" alt="" /></div>
-          <button onClick={() => setCompare(true)}>{t.cards.openComparison} <ArrowRight size={14} /></button>
-        </article>
-        <article>
-          <header><div><em>{t.cards.functionAnimation}</em><h3>{organ.function}</h3></div><Play size={17} /></header>
-          {/* The artwork itself is the control, so the play badge inside it is
-              decorative rather than a nested button. */}
-          <button
-            type="button"
-            className="function-visual organ-card-image"
-            onClick={() => setModal("animation")}
-            aria-label={format(t.cards.playAria, { organ: organ.name })}
+          <OrganViewer
+            organ={organ}
+            t={t}
+            handleRef={viewerRef}
+            autoRotate={spinning}
+            onAutoRotate={setAutoRotate}
+            compare={compareOpen}
+            onCompare={() => setCompareOpen(true)}
+            quizActive={quiz?.mode === "label"}
+            theme={theme}
+            quality={prefs.quality}
+            alwaysLabels={prefs.alwaysLabels}
+            onPick={(hotspot) => quizPickRef.current(hotspot)}
+            onSelect={(hotspot) => {
+              setSelectedHotspot(hotspot);
+              // A structure the learner just picked should be visible in the
+              // panel too, wherever the click came from.
+              if (hotspot) setInspectorTab("structures");
+            }}
+            onToast={(text) => push(text, "success")}
+            onOrganReady={onOrganReady}
+            overlayActive={Boolean(lesson) || Boolean(quiz)}
           >
-            <OrganArt organ={organ} asset="organ" alt="" />
-            <i className="function-pulse" />
-            <span className="play-badge"><Play size={18} fill="currentColor" /></span>
-          </button>
-          <button onClick={() => setModal("animation")}>{t.cards.playAnimation} <ArrowRight size={14} /></button>
-        </article>
-        <article>
-          <header><div><em>{t.cards.clinicalNotes}</em><h3>{t.cards.commonConditions}</h3></div><FileText size={17} /></header>
-          <ul>{organ.conditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
-          <button onClick={() => setModal("lesson")}>{t.cards.seeAll} <ArrowRight size={14} /></button>
-        </article>
-        <article className="system-card">
-          <header><div><em>{t.cards.whereItWorks}</em><h3>{organ.system}</h3></div><BrainCircuit size={17} /></header>
-          <button
-            type="button"
-            className="system-visual organ-card-image"
-            onClick={() => setModal("system")}
-            aria-label={format(t.cards.systemAria, { organ: organ.name })}
-          >
-            <OrganArt organ={organ} asset="location" alt="" />
-          </button>
-          <button onClick={() => setModal("system")}>{t.cards.seeSystem} <ArrowRight size={14} /></button>
-        </article>
-      </section>
+            {lesson && (
+              <LessonPlayer
+                key={lesson.id}
+                t={t}
+                lesson={lesson}
+                reduceMotion={prefs.reduceMotion}
+                onStep={(stepOrgan, hotspotId) => {
+                  if (stepOrgan !== organId) {
+                    // A single slot, not a queue: stepping through the grand
+                    // tour faster than a model can load should focus wherever
+                    // the learner actually ended up, not replay every stop
+                    // along the way once each one's load eventually catches up.
+                    pendingFocusRef.current = { organId: stepOrgan, hotspotId };
+                    selectOrgan(stepOrgan);
+                  } else {
+                    viewerRef.current?.selectHotspot(hotspotId, true);
+                  }
+                  actions.markLearned(stepOrgan, hotspotId);
+                }}
+                onComplete={() => actions.completeLesson(lesson.id)}
+                onExit={() => setLesson(null)}
+              />
+            )}
 
-      {modal && <LearningModal type={modal} organ={organ} t={t} onClose={() => setModal(null)} />}
-      {mobileLibrary && <button className="drawer-backdrop" aria-label={t.library.close} onClick={() => setMobileLibrary(false)} />}
-    </main>
-  );
-}
+            {quiz && (
+              <QuizSession
+                key={`${quiz.mode}-${quiz.scope}-${organId}`}
+                t={t}
+                config={quiz}
+                organ={organ}
+                organs={organs}
+                pickRef={quizPickRef}
+                flash={(id, correct) => viewerRef.current?.flash(id, correct)}
+                screenY={(id) => viewerRef.current?.screenY(id) ?? null}
+                onLearned={(target, hotspotId) => actions.markLearned(target, hotspotId)}
+                onFinish={(score, total) => actions.recordQuiz(score, total)}
+                onExit={() => setQuiz(null)}
+              />
+            )}
+          </OrganViewer>
 
-const MODAL_ICON: Record<Exclude<Modal, null>, string> = {
-  quiz: "?",
-  animation: "▶",
-  system: "⌖",
-  lesson: "✦",
-};
-
-function LearningModal({
-  type,
-  organ,
-  t,
-  onClose,
-}: {
-  type: Exclude<Modal, null>;
-  organ: Organ;
-  t: UiDictionary;
-  onClose: () => void;
-}) {
-  const vars = { organ: organ.name, location: organ.location };
-  const title =
-    type === "quiz" ? format(t.modal.quizTitle, vars)
-    : type === "animation" ? format(t.modal.motionTitle, vars)
-    // Avoids gluing onto `system`, whose wording varies per organ, and stays
-    // grammatical for the plural organs too.
-    : type === "system" ? format(t.modal.bodyTitle, vars)
-    : format(t.modal.insideTitle, vars);
-
-  return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section
-        className={`learning-modal ${type === "system" ? "wide" : ""}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <button className="modal-close" onClick={onClose} aria-label={t.modal.close}><X size={18} /></button>
-        <span className="modal-icon">{MODAL_ICON[type]}</span>
-        <em>{t.modal.guided}</em>
-        <h2 id="modal-title">{title}</h2>
-        {type === "quiz" ? (
-          <div className="quiz-options">
-            <p>{format(t.modal.quizPrompt, vars)}</p>
-            <button onClick={onClose}>{t.modal.quizA}</button>
-            <button onClick={onClose}>{t.modal.quizB}</button>
-            <button onClick={onClose}>{t.modal.quizC}</button>
+          <div ref={contentRef} className="inspector-wrap">
+            <Inspector
+              t={t}
+              organ={organ}
+              organs={organs}
+              progress={progress}
+              selectedHotspotId={selectedHotspot?.id ?? null}
+              onSelectHotspot={(hotspot, focus) => viewerRef.current?.selectHotspot(hotspot.id, focus)}
+              onToggleLearned={(hotspotId) => actions.toggleLearned(organId, hotspotId)}
+              onToggleBookmark={() => {
+                const added = actions.toggleBookmark(organId);
+                push(added ? t.bookmarks.added : t.bookmarks.removed, "success");
+              }}
+              onOpenOrgan={selectOrgan}
+              onStartLesson={() => startLesson(lessons.find((item) => item.organId === organId) ?? lessons[0])}
+              onStartQuiz={() => setSheet("quiz")}
+              onCompare={() => setCompareOpen(true)}
+              onShare={() => setSheet("share")}
+              onPrint={() => window.print()}
+              onSaveNote={(text) => actions.saveNote(organId, text)}
+              onExportNotes={exportNotes}
+              compare={compareOpen}
+              tab={inspectorTab}
+              onTab={setInspectorTab}
+            />
           </div>
-        ) : type === "system" ? (
-          <>
-            <p>{format(t.modal.systemIntro, vars)}</p>
-            {/* Shown whole rather than cropped into the circular demo — the
-                point of this view is the figure and its vessels. */}
-            <figure className="modal-figure">
+        </div>
+
+        <section className="learning-cards" aria-label={format(t.cards.resources, { organ: organ.name })}>
+          <article className="curiosity-card">
+            <span>✿</span>
+            <p>{t.library.quoteLine1}<br />{t.library.quoteLine2}</p>
+            <em>{t.library.quoteSign}</em>
+          </article>
+
+          <article>
+            <header>
+              <div><em>{t.cards.microscopic}</em><h3>{organ.tissue}</h3></div>
+              <Microscope size={16} />
+            </header>
+            <div className="microscope-visual organ-card-image"><OrganArt organ={organ} asset="microscopic" alt="" /></div>
+            <button type="button" onClick={() => setSheet("glossary")}>{t.cards.exploreTissue} <ArrowRight size={13} /></button>
+          </article>
+
+          <article>
+            <header>
+              <div><em>{t.cards.compareOrgans}</em><h3>{organ.comparison}</h3></div>
+              <Share2 size={16} />
+            </header>
+            <div className="comparison-visual organ-card-image"><OrganArt organ={organ} asset="compare" alt="" /></div>
+            <button type="button" onClick={() => setCompareOpen(true)}>{t.cards.openComparison} <ArrowRight size={13} /></button>
+          </article>
+
+          <article>
+            <header>
+              <div><em>{t.lessons.title}</em><h3>{organ.function}</h3></div>
+              <Play size={16} />
+            </header>
+            {/* The artwork itself is the control, so the play badge inside it is
+                decorative rather than a nested button. */}
+            <button
+              type="button"
+              className="function-visual organ-card-image"
+              onClick={() => startLesson(lessons.find((item) => item.organId === organId) ?? lessons[0])}
+              aria-label={format(t.cards.playAria, { organ: organ.name })}
+            >
+              <OrganArt organ={organ} asset="organ" alt="" />
+              <i className="function-pulse" />
+              <span className="play-badge"><Play size={17} fill="currentColor" /></span>
+            </button>
+            <button type="button" onClick={() => startLesson(lessons.find((item) => item.organId === organId) ?? lessons[0])}>
+              {t.lessons.start} <ArrowRight size={13} />
+            </button>
+          </article>
+
+          <article>
+            <header>
+              <div><em>{t.cards.clinicalNotes}</em><h3>{t.cards.commonConditions}</h3></div>
+              <Sparkles size={16} />
+            </header>
+            <ul>{organ.conditions.slice(0, 5).map((condition) => <li key={condition}>{condition}</li>)}</ul>
+            <button type="button" onClick={() => setSheet("quiz")}>{t.quiz.chooseMode} <ArrowRight size={13} /></button>
+          </article>
+
+          <article className="system-card">
+            <header>
+              <div><em>{t.cards.whereItWorks}</em><h3>{organ.system}</h3></div>
+              <GraduationCap size={16} />
+            </header>
+            <button
+              type="button"
+              className="system-visual organ-card-image"
+              onClick={() => setSheet("systems")}
+              aria-label={format(t.cards.systemAria, { organ: organ.name })}
+            >
               <OrganArt organ={organ} asset="location" alt="" />
-            </figure>
-            <dl className="modal-facts">
-              <div><dt>{t.modal.system}</dt><dd>{organ.system}</dd></div>
-              <div><dt>{t.modal.primaryRole}</dt><dd><Measure>{organ.function}</Measure></dd></div>
-              <div><dt>{t.modal.bloodSupply}</dt><dd><Measure>{organ.bloodSupply}</Measure></dd></div>
-            </dl>
-            <button className="lesson-button" onClick={onClose}>{t.modal.continueExploring} <ArrowRight size={16} /></button>
-          </>
-        ) : (
+            </button>
+            <button type="button" onClick={() => setSheet("systems")}>{t.cards.seeSystem} <ArrowRight size={13} /></button>
+          </article>
+        </section>
+      </main>
+
+      {/* Only rendered by the printer. Everything a learner needs on paper, in
+          the order they would revise it. */}
+      <section className="study-sheet" aria-hidden>
+        {/* Deliberately not an h1: the inspector already owns the page's single
+            top-level heading, and a second one only ever reaches a printer. */}
+        <p className="study-title">{format(t.print.title, { organ: organ.name })}</p>
+        <p className="study-meta">{t.print.source} · {organ.scientificName} · {organ.system}</p>
+        <p>{organ.description}</p>
+        <dl>
+          <div><dt>{t.info.size}</dt><dd><Measure>{organ.size}</Measure></dd></div>
+          <div><dt>{t.info.weight}</dt><dd><Measure>{organ.weight}</Measure></dd></div>
+          <div><dt>{t.info.location}</dt><dd><Measure>{organ.location}</Measure></dd></div>
+          <div><dt>{t.info.bloodSupply}</dt><dd><Measure>{organ.bloodSupply}</Measure></dd></div>
+          <div><dt>{t.info.function}</dt><dd><Measure>{organ.function}</Measure></dd></div>
+        </dl>
+        <h2>{t.structures.title}</h2>
+        <ol>
+          {organ.hotspots.map((hotspot) => (
+            <li key={hotspot.id}><b>{hotspot.label}</b> — {hotspot.detail} <i>({hotspot.ta})</i></li>
+          ))}
+        </ol>
+        <h2>{t.clinical.conditions}</h2>
+        <ul>{organ.conditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
+        {progress.notes[organId] && (
           <>
-            <p>{t.modal.lessonBody}</p>
-            <div className={`modal-demo ${type === "animation" ? "moving" : ""}`}><OrganArt organ={organ} asset="organ" alt="" /></div>
-            <button className="lesson-button" onClick={onClose}>{t.modal.continueExploring} <ArrowRight size={16} /></button>
+            <h2>{t.notes.title}</h2>
+            <p>{progress.notes[organId].text}</p>
           </>
         )}
+        <p className="study-meta">{t.clinical.disclaimer}</p>
       </section>
-    </div>
+
+      {paletteOpen && (
+        <CommandPalette
+          t={t}
+          locale={locale.code}
+          organs={organs}
+          systems={systems}
+          actions={paletteActions}
+          onOpenOrgan={selectOrgan}
+          onOpenStructure={openStructure}
+          onOpenSystem={(system) => selectOrgan(system.organs[0])}
+          onStartLesson={(id) => startLesson(lessons.find((item) => item.organId === id) ?? lessons[0])}
+          onClose={() => setPaletteOpen(false)}
+        />
+      )}
+
+      {sheet === "systems" && (
+        <SystemsSheet
+          t={t}
+          systems={systems}
+          organs={organs}
+          onOpenOrgan={(id) => {
+            selectOrgan(id);
+            setSheet(null);
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+
+      {sheet === "glossary" && (
+        <GlossarySheet
+          t={t}
+          locale={locale.code}
+          entries={glossary}
+          onOpen={(target, hotspotId) => {
+            openStructure(target, hotspotId);
+            setSheet(null);
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+
+      {sheet === "lessons" && (
+        <LessonsSheet t={t} lessons={lessons} progress={progress} onStart={startLesson} onClose={() => setSheet(null)} />
+      )}
+
+      {sheet === "progress" && (
+        <ProgressSheet
+          t={t}
+          progress={progress}
+          organs={organs}
+          onReset={() => {
+            actions.resetProgress();
+            push(t.progress.resetDone, "info");
+            setSheet(null);
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+
+      {sheet === "settings" && (
+        <SettingsSheet t={t} prefs={prefs} onChange={(patch) => actions.setPrefs(patch)} onClose={() => setSheet(null)} />
+      )}
+
+      {sheet === "share" && (
+        <ShareSheet
+          t={t}
+          url={shareUrl({ organ: organId, hotspot: selectedHotspot?.id ?? null, view: lastView })}
+          onClose={() => setSheet(null)}
+        />
+      )}
+
+      {sheet === "quiz" && (
+        <QuizLauncher
+          t={t}
+          organ={organ}
+          onClose={() => setSheet(null)}
+          onStart={(config) => {
+            setLesson(null);
+            setSheet(null);
+            setQuiz(config);
+          }}
+        />
+      )}
+
+      {compareOpen && (
+        <CompareView
+          t={t}
+          organs={organs}
+          left={organ}
+          right={compareOrgan.id === organ.id ? organById[organ.related[0] ?? "brain"] : compareOrgan}
+          theme={theme}
+          quality={prefs.quality}
+          onPickRight={setCompareId}
+          onSwap={() => {
+            const previous = organId;
+            setOrganId(compareId);
+            setCompareId(previous);
+          }}
+          onClose={() => setCompareOpen(false)}
+        />
+      )}
+
+      {mobileLibrary && (
+        <button className="drawer-backdrop" aria-label={t.library.close} onClick={() => setMobileLibrary(false)} />
+      )}
+
+      <ToastStack toasts={toasts} />
+    </>
   );
 }

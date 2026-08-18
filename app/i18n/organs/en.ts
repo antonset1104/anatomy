@@ -18,6 +18,10 @@ export const organs: OrganContentDictionary = {
     comparison: "Heart vs. brain",
     conditions: ["Coronary artery disease", "Arrhythmia", "Heart valve disorders", "Heart failure", "Cardiomyopathy", "Myocarditis", "Atrial fibrillation", "Congenital heart defects"],
     hotspots: {
+      "pulmonary-trunk": { label: "Pulmonary Trunk", detail: "Carries blood to the lungs" },
+      "superior-vena-cava": { label: "Superior Vena Cava", detail: "Returns blood from above the heart" },
+      "apex": { label: "Apex", detail: "The pointed tip, angled left" },
+      "coronary-artery": { label: "Left Coronary Artery", detail: "Feeds the heart muscle itself" },
       "aorta": { label: "Aorta", detail: "Main artery" },
       "left-atrium": { label: "Left Atrium", detail: "Receives oxygenated blood" },
       "right-atrium": { label: "Right Atrium", detail: "Receives venous blood" },
@@ -43,6 +47,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Brain vs. eye",
     conditions: ["Migraine", "Stroke", "Neurodegenerative disease", "Epilepsy", "Traumatic brain injury", "Meningitis", "Multiple sclerosis", "Brain aneurysm"],
     hotspots: {
+      "occipital": { label: "Occipital Lobe", detail: "Vision" },
+      "brainstem": { label: "Brainstem", detail: "Breathing & heart rate" },
+      "central-sulcus": { label: "Central Sulcus", detail: "Divides motor from sensory cortex" },
       "frontal": { label: "Frontal Lobe", detail: "Planning & movement" },
       "parietal": { label: "Parietal Lobe", detail: "Sensory integration" },
       "temporal": { label: "Temporal Lobe", detail: "Memory & hearing" },
@@ -66,6 +73,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Lungs vs. heart",
     conditions: ["Asthma", "COPD", "Pneumonia", "Pulmonary embolism", "Pulmonary fibrosis", "Bronchitis", "Cystic fibrosis", "Lung cancer"],
     hotspots: {
+      "apex": { label: "Apex", detail: "The top, above the first rib" },
+      "hilum": { label: "Hilum", detail: "Where vessels and bronchi enter" },
+      "lobe-fissure": { label: "Oblique Fissure", detail: "The groove between lobes" },
       "trachea": { label: "Trachea", detail: "Carries air to the lungs" },
       "right-lung": { label: "Right Lung", detail: "Three lobes" },
       "left-lung": { label: "Left Lung", detail: "Two lobes, room for the heart" },
@@ -90,6 +100,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Liver vs. intestine",
     conditions: ["Fatty liver disease", "Hepatitis", "Cirrhosis", "Gallstones", "Haemochromatosis", "Liver cancer", "Autoimmune hepatitis", "Portal hypertension"],
     hotspots: {
+      "gallbladder-bed": { label: "Gallbladder Bed", detail: "Where bile is stored against the liver" },
+      "hepatic-artery": { label: "Hepatic Artery", detail: "Brings oxygenated blood" },
+      "falciform": { label: "Falciform Ligament", detail: "Anchors the liver to the abdominal wall" },
       "right-lobe": { label: "Right Lobe", detail: "Largest hepatic lobe" },
       "left-lobe": { label: "Left Lobe", detail: "Crosses the midline" },
       "portal": { label: "Portal Vein", detail: "Nutrient-rich inflow" },
@@ -112,6 +125,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Kidneys vs. liver",
     conditions: ["Kidney stones", "Chronic kidney disease", "Urinary infection", "Glomerulonephritis", "Polycystic kidney disease", "Renal hypertension", "Acute kidney injury", "Nephrotic syndrome"],
     hotspots: {
+      "pelvis": { label: "Renal Pelvis", detail: "Funnels urine into the ureter" },
+      "renal-artery": { label: "Renal Artery", detail: "Delivers blood to be filtered" },
+      "hilum": { label: "Renal Hilum", detail: "The gateway for vessels and ureter" },
       "cortex": { label: "Renal Cortex", detail: "Outer filtering layer" },
       "medulla": { label: "Renal Medulla", detail: "Concentrates urine" },
       "ureter": { label: "Ureter", detail: "Carries urine" },
@@ -134,6 +150,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Eye vs. brain",
     conditions: ["Myopia", "Cataract", "Glaucoma", "Macular degeneration", "Retinal detachment", "Dry eye disease", "Astigmatism", "Conjunctivitis"],
     hotspots: {
+      "sclera": { label: "Sclera", detail: "The tough white outer coat" },
+      "lens": { label: "Lens", detail: "Focuses light onto the retina" },
+      "retina": { label: "Retina", detail: "Turns light into nerve signals" },
       "cornea": { label: "Cornea", detail: "Clear focusing surface" },
       "iris": { label: "Iris", detail: "Controls light entry" },
       "optic": { label: "Optic Nerve", detail: "Carries visual signals" },
@@ -156,6 +175,10 @@ export const organs: OrganContentDictionary = {
     comparison: "Intestine vs. liver",
     conditions: ["Irritable bowel syndrome", "Inflammatory bowel disease", "Celiac disease", "Diverticulitis", "Intestinal obstruction", "Colorectal polyps", "Crohn's disease", "Lactose intolerance"],
     hotspots: {
+      "ileum": { label: "Ileum", detail: "Final absorption of nutrients" },
+      "caecum": { label: "Caecum", detail: "Where the large intestine begins" },
+      "rectum": { label: "Rectum", detail: "Holds waste before it leaves" },
+      "mesentery": { label: "Mesentery", detail: "Suspends the gut and carries its vessels" },
       "duodenum": { label: "Duodenum", detail: "First small-intestine segment" },
       "jejunum": { label: "Jejunum", detail: "Major absorption region" },
       "colon": { label: "Colon", detail: "Reclaims water" },
@@ -178,6 +201,8 @@ export const organs: OrganContentDictionary = {
     comparison: "Pancreas vs. liver",
     conditions: ["Pancreatitis", "Type 1 diabetes", "Pancreatic cancer", "Type 2 diabetes", "Exocrine insufficiency", "Pancreatic cysts", "Gallstone pancreatitis", "Insulinoma"],
     hotspots: {
+      "neck": { label: "Neck", detail: "The narrow join between head and body" },
+      "islets": { label: "Islets of Langerhans", detail: "Release insulin and glucagon" },
       "head": { label: "Head", detail: "Cradled by the duodenum" },
       "body": { label: "Body", detail: "Crosses the spine" },
       "tail": { label: "Tail", detail: "Reaches the spleen" },
@@ -201,6 +226,8 @@ export const organs: OrganContentDictionary = {
     comparison: "Skin vs. intestine",
     conditions: ["Eczema", "Psoriasis", "Melanoma", "Acne vulgaris", "Cellulitis", "Contact dermatitis", "Rosacea", "Vitiligo"],
     hotspots: {
+      "sweat-gland": { label: "Sweat Gland", detail: "Cools the body by evaporation" },
+      "nerve-ending": { label: "Tactile Corpuscle", detail: "Senses light touch" },
       "epidermis": { label: "Epidermis", detail: "Outer protective layer" },
       "dermis": { label: "Dermis", detail: "Nerves, vessels & glands" },
       "hypodermis": { label: "Hypodermis", detail: "Fat and insulation" },

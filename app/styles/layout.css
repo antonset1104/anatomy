@@ -1,0 +1,291 @@
+/* ------------------------------------------------------------------ layout */
+
+.app-shell {
+  min-height: 100vh;
+  padding: var(--space-5) var(--space-6) var(--space-6);
+}
+
+/* ------------------------------------------------------------------ topbar */
+
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 0.9fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 1760px;
+  min-height: 64px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: start;
+}
+
+.brand strong {
+  font: 500 clamp(24px, 2vw, 36px) / 1 var(--font-display);
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+  color: var(--ink-strong);
+}
+
+.brand sup {
+  color: var(--accent);
+  font: 400 var(--text-xs) var(--font-body);
+  padding-inline-start: 3px;
+}
+
+.brand em {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+}
+
+.main-nav button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.main-nav button:hover { color: var(--ink); background: var(--surface-hover); }
+
+.main-nav button.active {
+  color: var(--ink-strong);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-sm);
+}
+
+.command-trigger {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: min(100%, 280px);
+  min-height: 40px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+
+.command-trigger:hover { border-color: var(--line-strong); color: var(--ink); }
+.command-trigger span { flex: 1; text-align: start; }
+
+.command-trigger kbd,
+.palette-foot kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-sunken);
+  color: var(--faint);
+  font-family: var(--font-body);
+  font-size: var(--text-3xs);
+}
+
+.topbar-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.streak-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-size: var(--text-2xs);
+}
+
+.streak-chip b { color: var(--ink); font-family: var(--font-display); font-size: var(--text-sm); }
+.streak-chip:hover { border-color: var(--line-strong); }
+
+/* Language switcher. `select` keeps native keyboard and mobile behaviour. */
+.language-switcher {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.language-current {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Stretched over the whole pill and invisible, so every pixel of the control
+   opens the native picker. The visible row sits underneath. */
+.language-switcher select {
+  position: absolute;
+  /* -1px so the overlay also covers the pill's own border; `inset` resolves
+     against the padding box, which stops just inside it. */
+  inset: -1px;
+  opacity: 0;
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* The <select> is a square box inside a pill, so a ring drawn on it reads as a
+   stray rectangle. Move the ring to the wrapper, where it follows the pill's
+   border-radius. Keyboard users still get a clear indicator. */
+.language-switcher select:focus,
+.language-switcher select:focus-visible { outline: none; }
+
+.language-switcher:has(select:focus-visible) {
+  outline: 2px solid var(--violet);
+  outline-offset: 3px;
+}
+
+.mobile-library-trigger { display: none; }
+
+/* --------------------------------------------------------------- workspace */
+
+.workspace {
+  max-width: 1760px;
+  height: min(780px, calc(100vh - 132px));
+  min-height: 620px;
+  margin: var(--space-3) auto 0;
+  display: grid;
+  grid-template-columns: 288px minmax(560px, 1fr) 348px;
+  gap: var(--space-4);
+}
+
+.organ-library,
+.viewer-shell,
+.info-panel {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-md), var(--shadow-inset);
+}
+
+.inspector-wrap { min-height: 0; display: flex; }
+
+/* ------------------------------------------------------------ study sheet */
+
+.study-sheet { display: none; }
+
+@media print {
+  .app-shell,
+  .toast-stack,
+  .modal-backdrop,
+  .palette-backdrop,
+  .skip-link { display: none !important; }
+
+  html, body { background: #fff; color: #000; }
+
+  .study-sheet {
+    display: block;
+    padding: 24px;
+    font-family: var(--font-display);
+  }
+
+  .study-sheet .study-title { font-family: var(--font-display); font-size: 26pt; font-weight: 500; margin: 0 0 4pt; }
+  .study-sheet h2 { font-size: 13pt; margin: 18pt 0 6pt; border-bottom: 1px solid #ccc; padding-bottom: 3pt; }
+  .study-sheet .study-meta { color: #666; font-size: 9pt; }
+  .study-sheet dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt 18pt; margin: 12pt 0; }
+  .study-sheet dt { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.1em; color: #666; }
+  .study-sheet dd { margin: 0 0 6pt; font-size: 11pt; }
+  .study-sheet li { margin-bottom: 4pt; font-size: 11pt; }
+  .study-sheet i { color: #666; }
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@media (max-width: 1400px) {
+  .app-shell { padding: var(--space-4); }
+  .topbar { grid-template-columns: 1fr auto auto; }
+  .command-trigger { display: none; }
+  .workspace {
+    grid-template-columns: 252px minmax(460px, 1fr) 320px;
+    height: min(720px, calc(100vh - 112px));
+  }
+}
+
+@media (max-width: 1560px) {
+  .brand em { display: none; }
+}
+
+@media (max-width: 1120px) {
+  .main-nav button span { display: none; }
+  .main-nav button { padding: 0 var(--space-2); }
+  .workspace {
+    grid-template-columns: 224px minmax(420px, 1fr);
+    height: auto;
+  }
+  .organ-library, .viewer-shell { height: 620px; }
+  .inspector-wrap { grid-column: 1 / -1; }
+  .info-panel { width: 100%; max-height: 460px; }
+}
+
+@media (max-width: 780px) {
+  .app-shell { padding: var(--space-2); }
+  /* Only the wordmark and the controls survive here, and the wordmark is the
+     one allowed to shrink — `minmax(0, …)` is what lets it. */
+  .topbar { grid-template-columns: minmax(0, 1fr) auto; min-height: 54px; gap: var(--space-2); }
+  .brand { min-width: 0; }
+  .brand strong { font-size: 24px; overflow: hidden; text-overflow: ellipsis; }
+  .main-nav { display: none; }
+  .streak-chip small { display: none; }
+  .mobile-library-trigger { display: grid; }
+  .workspace { display: block; margin-top: var(--space-2); }
+  .viewer-shell { height: 66vh; min-height: 480px; border-radius: var(--radius-lg); }
+  .info-panel { margin-top: var(--space-2); max-height: none; border-radius: var(--radius-lg); }
+}
+
+@media (max-width: 480px) {
+  .brand strong { font-size: 21px; }
+  .viewer-shell { min-height: 430px; height: 62vh; }
+  /* Five controls plus the wordmark do not fit 375px. The two that carry their
+     meaning in an icon give up their labels, and the mastery chip steps aside —
+     it duplicates the Progress sheet, which the palette and nav both reach. */
+  .language-current { display: none; }
+  .streak-chip { display: none; }
+}

@@ -1,17 +1,21 @@
 /**
  * Checks the locale dictionaries for the classes of drift TypeScript cannot see.
  *
- * The `UiDictionary` / `OrganContent` types already force every locale to carry
- * every field, so missing keys fail the build. What they do NOT catch:
+ * Since locales became patches over English (see `app/i18n/dictionaries.ts`),
+ * TypeScript no longer forces every locale to carry every field — a gap is a
+ * legitimate state that renders the English string. So the audit's job changed:
+ * it now reports *coverage* and hunts for the mistakes that still break a page.
  *
- *   1. hotspot keys — typed as `Record<string, …>`, so a missing or misspelled
- *      structure silently falls back to the Latin TA term at runtime;
- *   2. placeholder drift — a `{organ}` present in English but dropped in a
- *      translation renders a literal, broken sentence;
- *   3. strings left identical to English after a copy-paste.
+ * Errors — these ship a visibly wrong page:
+ *   1. unknown hotspot ids — a typo that will never be read at runtime;
+ *   2. unknown metric keys — same, for the physiology labels;
+ *   3. placeholder drift — a `{organ}` present in English but dropped in a
+ *      translation renders a literal, broken sentence.
  *
- * (1) and (2) are errors. (3) is reported for review, because plenty of
- * anatomical terms are legitimately identical across languages.
+ * Warnings — these are just work not yet done:
+ *   4. untranslated keys (absent, so English shows through);
+ *   5. strings present but identical to English, which is often correct for
+ *      anatomical terms and worth a human glance otherwise.
  *
  * Run: npm run i18n:audit
  */
@@ -26,15 +30,20 @@ const dim = (s) => `[2m${s}${RESET}`;
 
 const placeholders = (value) => (String(value).match(/\{(\w+)\}/g) ?? []).sort().join(",");
 
-/** Depth-first walk yielding [dottedPath, string] for every leaf string. */
+/**
+ * Depth-first walk yielding [keySegments, string] for every leaf string. The
+ * path stays an array rather than a dotted string because some keys contain
+ * dots of their own — `metrics["heart.rate"]` is one key, not two levels.
+ */
 function* strings(node, path = []) {
   for (const [key, value] of Object.entries(node)) {
     const next = [...path, key];
-    if (typeof value === "string") yield [next.join("."), value];
-    else if (Array.isArray(value)) value.forEach((item, i) => { if (typeof item === "string") return void (0); });
-    else if (value && typeof value === "object") yield* strings(value, next);
+    if (typeof value === "string") yield [next, value];
+    else if (value && typeof value === "object" && !Array.isArray(value)) yield* strings(value, next);
   }
 }
+
+const at = (node, path) => path.reduce((current, key) => current?.[key], node);
 
 const load = async (locale) => ({
   ui: (await import(`../app/i18n/ui/${locale}.ts`)).ui,
@@ -42,72 +51,89 @@ const load = async (locale) => ({
 });
 
 const base = await load("en");
-const expectedHotspots = Object.fromEntries(
-  organStructures.map((organ) => [organ.id, organ.hotspots.map((hotspot) => hotspot.id).sort()]),
+const knownHotspots = Object.fromEntries(
+  organStructures.map((organ) => [organ.id, organ.hotspots.map((hotspot) => hotspot.id)]),
 );
 const taByKey = Object.fromEntries(
   organStructures.flatMap((organ) => organ.hotspots.map((h) => [`${organ.id}.${h.id}`, h.ta])),
 );
+const knownMetricKeys = new Set(
+  organStructures.flatMap((organ) => organ.metrics.map((metric) => `${organ.id}.${metric.id}`)),
+);
+
+// English is the fallback for everything, so a gap there is a real hole.
+for (const organ of organStructures) {
+  for (const id of knownHotspots[organ.id]) {
+    if (!base.organs[organ.id].hotspots[id]) {
+      console.log(red(`  en is missing hotspot ${organ.id}.${id} (${taByKey[`${organ.id}.${id}`]})`));
+    }
+  }
+  for (const metric of organ.metrics) {
+    if (!base.ui.metrics[`${organ.id}.${metric.id}`]) {
+      console.log(red(`  en is missing metric label ${organ.id}.${metric.id}`));
+    }
+  }
+}
 
 let errors = 0;
-let warnings = 0;
 const rows = [];
+const baseUiStrings = [...strings(base.ui)];
 
 for (const { code } of locales) {
   const dict = await load(code);
   const issues = [];
+  let translated = 0;
   let identical = 0;
-  let total = 0;
 
-  // 1. hotspot key parity
+  // 1 + 4. hotspot keys: unknown ids are typos, absent ids fall back to English.
   for (const organ of organStructures) {
-    const got = Object.keys(dict.organs[organ.id].hotspots).sort();
-    const want = expectedHotspots[organ.id];
-    const missing = want.filter((id) => !got.includes(id));
-    const extra = got.filter((id) => !want.includes(id));
-    for (const id of missing) issues.push(red(`missing hotspot  ${organ.id}.${id}  ${dim(`(${taByKey[`${organ.id}.${id}`]})`)}`));
-    for (const id of extra) issues.push(red(`unknown hotspot  ${organ.id}.${id}`));
-    errors += missing.length + extra.length;
-  }
-
-  // 2. placeholder parity + 3. untranslated detection, over the UI dictionary
-  for (const [path, english] of strings(base.ui)) {
-    const translated = path.split(".").reduce((node, key) => node?.[key], dict.ui);
-    total += 1;
-    if (typeof translated !== "string") continue;
-    if (placeholders(english) !== placeholders(translated)) {
-      issues.push(red(`placeholder drift ui.${path}  ${dim(`en:[${placeholders(english) || "—"}] ${code}:[${placeholders(translated) || "—"}]`)}`));
+    const want = knownHotspots[organ.id];
+    const got = Object.keys(dict.organs[organ.id]?.hotspots ?? {});
+    for (const id of got.filter((id) => !want.includes(id))) {
+      issues.push(red(`unknown hotspot   ${organ.id}.${id}`));
       errors += 1;
     }
-    if (code !== "en" && translated === english) identical += 1;
   }
 
-  // untranslated prose in the organ dictionary (hotspot labels excluded — those
-  // are frequently identical by design, e.g. "Aorta")
-  for (const organ of organStructures) {
-    for (const [field, english] of Object.entries(base.organs[organ.id])) {
-      if (typeof english !== "string") continue;
-      total += 1;
-      const translated = dict.organs[organ.id][field];
-      if (code !== "en" && translated === english) identical += 1;
+  // 2. metric labels are keyed `<organ>.<metric>`, so a typo is invisible at build.
+  for (const key of Object.keys(dict.ui.metrics ?? {})) {
+    if (!knownMetricKeys.has(key)) {
+      issues.push(red(`unknown metric    metrics.${key}`));
+      errors += 1;
     }
   }
 
-  warnings += identical;
-  rows.push({ code, total, identical, issues });
+  // 3 + 4 + 5. placeholder parity and coverage over the whole UI dictionary.
+  for (const [path, english] of baseUiStrings) {
+    const value = at(dict.ui, path);
+    if (typeof value !== "string") continue;
+    translated += 1;
+    if (placeholders(english) !== placeholders(value)) {
+      issues.push(
+        red(`placeholder drift ui.${path.join(".")}  ${dim(`en:[${placeholders(english) || "—"}] ${code}:[${placeholders(value) || "—"}]`)}`),
+      );
+      errors += 1;
+    }
+    if (code !== "en" && value === english) identical += 1;
+  }
+
+  const coverage = Math.round((translated / baseUiStrings.length) * 100);
+  rows.push({ code, coverage, translated, identical, issues });
 }
 
-console.log(`\n  locale   strings   same-as-en   status`);
-console.log(`  ${"-".repeat(46)}`);
+console.log(`\n  locale   ui coverage        same-as-en   status`);
+console.log(`  ${"-".repeat(56)}`);
 for (const row of rows) {
   const status = row.issues.length ? red(`${row.issues.length} error(s)`) : green("ok");
+  const bar = `${row.translated}/${baseUiStrings.length} (${row.coverage}%)`;
+  const coverage = row.coverage === 100 ? green(bar) : yellow(bar);
   const same = row.code === "en" ? dim("—") : row.identical ? yellow(String(row.identical)) : green("0");
-  console.log(`  ${row.code.padEnd(8)} ${String(row.total).padEnd(9)} ${same.padEnd(21)} ${status}`);
+  console.log(`  ${row.code.padEnd(8)} ${coverage.padEnd(28)} ${same.padEnd(21)} ${status}`);
   for (const issue of row.issues) console.log(`      ${issue}`);
 }
 
 console.log(
   `\n  ${errors ? red(`${errors} error(s)`) : green("no errors")}` +
-  `  ${warnings ? yellow(`${warnings} string(s) identical to English — review`) : ""}\n`,
+  `  ${dim("gaps fall back to English at runtime — see app/i18n/dictionaries.ts")}\n`,
 );
 process.exit(errors ? 1 : 0);

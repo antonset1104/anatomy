@@ -1,6 +1,6 @@
-import type { OrganContentDictionary } from "../types";
+import type { OrganContentPatch } from "../types";
 
-export const organs: OrganContentDictionary = {
+export const organs: OrganContentPatch = {
   heart: {
     name: "القلب",
     system: "الجهاز القلبي الوعائي",

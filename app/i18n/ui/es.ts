@@ -1,6 +1,6 @@
-import type { UiDictionary } from "../types";
+import type { UiPatch } from "../types";
 
-export const ui: UiDictionary = {
+export const ui: UiPatch = {
   meta: {
     title: "Anatomy Atelier — Aprende anatomía como un artista",
     description:

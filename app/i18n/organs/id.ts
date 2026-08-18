@@ -1,6 +1,6 @@
-import type { OrganContentDictionary } from "../types";
+import type { OrganContentPatch } from "../types";
 
-export const organs: OrganContentDictionary = {
+export const organs: OrganContentPatch = {
   heart: {
     name: "Jantung",
     system: "Sistem kardiovaskular",
@@ -18,6 +18,10 @@ export const organs: OrganContentDictionary = {
     comparison: "Jantung dan otak",
     conditions: ["Penyakit jantung koroner", "Aritmia", "Kelainan katup jantung", "Gagal jantung", "Kardiomiopati", "Miokarditis", "Fibrilasi atrium", "Penyakit jantung bawaan"],
     hotspots: {
+      "pulmonary-trunk": { label: "Trunkus pulmonalis", detail: "Mengalirkan darah ke paru-paru" },
+      "superior-vena-cava": { label: "Vena kava superior", detail: "Mengembalikan darah dari tubuh bagian atas" },
+      "apex": { label: "Apeks", detail: "Ujung lancip yang mengarah ke kiri" },
+      "coronary-artery": { label: "Arteri koroner kiri", detail: "Memberi makan otot jantung sendiri" },
       aorta: { label: "Aorta", detail: "Arteri utama" },
       "left-atrium": { label: "Serambi kiri", detail: "Menerima darah beroksigen" },
       "right-atrium": { label: "Serambi kanan", detail: "Menerima darah vena" },
@@ -43,6 +47,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Otak dan mata",
     conditions: ["Migrain", "Stroke", "Penyakit neurodegeneratif", "Epilepsi", "Cedera otak traumatik", "Meningitis", "Sklerosis multipel", "Aneurisma otak"],
     hotspots: {
+      "occipital": { label: "Lobus oksipital", detail: "Penglihatan" },
+      "brainstem": { label: "Batang otak", detail: "Napas & denyut jantung" },
+      "central-sulcus": { label: "Sulkus sentralis", detail: "Pemisah korteks motorik dan sensorik" },
       frontal: { label: "Lobus frontal", detail: "Perencanaan dan gerakan" },
       parietal: { label: "Lobus parietal", detail: "Pemaduan sensorik" },
       temporal: { label: "Lobus temporal", detail: "Ingatan dan pendengaran" },
@@ -66,6 +73,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Paru-paru dan jantung",
     conditions: ["Asma", "PPOK", "Pneumonia", "Emboli paru", "Fibrosis paru", "Bronkitis", "Fibrosis kistik", "Kanker paru"],
     hotspots: {
+      "apex": { label: "Apeks", detail: "Puncak paru, di atas tulang rusuk pertama" },
+      "hilum": { label: "Hilum", detail: "Tempat pembuluh dan bronkus masuk" },
+      "lobe-fissure": { label: "Fisura oblik", detail: "Celah antar lobus" },
       trachea: { label: "Trakea", detail: "Mengalirkan udara ke paru-paru" },
       "right-lung": { label: "Paru kanan", detail: "Tiga lobus" },
       "left-lung": { label: "Paru kiri", detail: "Dua lobus, memberi ruang bagi jantung" },
@@ -90,6 +100,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Hati dan usus",
     conditions: ["Perlemakan hati", "Hepatitis", "Sirosis", "Batu empedu", "Hemokromatosis", "Kanker hati", "Hepatitis autoimun", "Hipertensi portal"],
     hotspots: {
+      "gallbladder-bed": { label: "Cekungan kandung empedu", detail: "Tempat empedu tersimpan menempel di hati" },
+      "hepatic-artery": { label: "Arteri hepatika", detail: "Membawa darah beroksigen" },
+      "falciform": { label: "Ligamentum falsiforme", detail: "Mengikat hati ke dinding perut" },
       "right-lobe": { label: "Lobus kanan", detail: "Lobus hati terbesar" },
       "left-lobe": { label: "Lobus kiri", detail: "Melewati garis tengah" },
       portal: { label: "Vena porta", detail: "Aliran masuk kaya nutrisi" },
@@ -112,6 +125,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Ginjal dan hati",
     conditions: ["Batu ginjal", "Penyakit ginjal kronis", "Infeksi saluran kemih", "Glomerulonefritis", "Ginjal polikistik", "Hipertensi renal", "Cedera ginjal akut", "Sindrom nefrotik"],
     hotspots: {
+      "pelvis": { label: "Pelvis renalis", detail: "Menyalurkan urine ke ureter" },
+      "renal-artery": { label: "Arteri renalis", detail: "Mengantar darah untuk disaring" },
+      "hilum": { label: "Hilum renalis", detail: "Pintu masuk pembuluh dan ureter" },
       cortex: { label: "Korteks ginjal", detail: "Lapisan penyaring luar" },
       medulla: { label: "Medula ginjal", detail: "Memekatkan urine" },
       ureter: { label: "Ureter", detail: "Menyalurkan urine" },
@@ -134,6 +150,9 @@ export const organs: OrganContentDictionary = {
     comparison: "Mata dan otak",
     conditions: ["Rabun jauh", "Katarak", "Glaukoma", "Degenerasi makula", "Ablasi retina", "Mata kering", "Astigmatisme", "Konjungtivitis"],
     hotspots: {
+      "sclera": { label: "Sklera", detail: "Lapisan luar putih yang kuat" },
+      "lens": { label: "Lensa", detail: "Memfokuskan cahaya ke retina" },
+      "retina": { label: "Retina", detail: "Mengubah cahaya menjadi sinyal saraf" },
       cornea: { label: "Kornea", detail: "Permukaan bening pemfokus" },
       iris: { label: "Iris", detail: "Mengatur cahaya yang masuk" },
       optic: { label: "Saraf optik", detail: "Membawa sinyal penglihatan" },
@@ -156,6 +175,10 @@ export const organs: OrganContentDictionary = {
     comparison: "Usus dan hati",
     conditions: ["Sindrom usus iritabel", "Penyakit radang usus", "Penyakit celiac", "Divertikulitis", "Sumbatan usus", "Polip kolorektal", "Penyakit Crohn", "Intoleransi laktosa"],
     hotspots: {
+      "ileum": { label: "Ileum", detail: "Penyerapan nutrisi tahap akhir" },
+      "caecum": { label: "Sekum", detail: "Awal dari usus besar" },
+      "rectum": { label: "Rektum", detail: "Menampung sisa sebelum dikeluarkan" },
+      "mesentery": { label: "Mesenterium", detail: "Menggantung usus dan membawa pembuluhnya" },
       duodenum: { label: "Duodenum", detail: "Bagian pertama usus halus" },
       jejunum: { label: "Jejunum", detail: "Wilayah penyerapan utama" },
       colon: { label: "Kolon", detail: "Menarik kembali air" },
@@ -178,6 +201,8 @@ export const organs: OrganContentDictionary = {
     comparison: "Pankreas dan hati",
     conditions: ["Pankreatitis", "Diabetes tipe 1", "Kanker pankreas", "Diabetes tipe 2", "Insufisiensi eksokrin", "Kista pankreas", "Pankreatitis bilier", "Insulinoma"],
     hotspots: {
+      "neck": { label: "Kolum", detail: "Bagian sempit antara kepala dan badan" },
+      "islets": { label: "Pulau Langerhans", detail: "Melepaskan insulin dan glukagon" },
       head: { label: "Kaput", detail: "Dipeluk oleh duodenum" },
       body: { label: "Korpus", detail: "Melintasi tulang belakang" },
       tail: { label: "Kauda", detail: "Menjangkau limpa" },
@@ -201,6 +226,8 @@ export const organs: OrganContentDictionary = {
     comparison: "Kulit dan usus",
     conditions: ["Eksem", "Psoriasis", "Melanoma", "Jerawat", "Selulitis", "Dermatitis kontak", "Rosasea", "Vitiligo"],
     hotspots: {
+      "sweat-gland": { label: "Kelenjar keringat", detail: "Mendinginkan tubuh melalui penguapan" },
+      "nerve-ending": { label: "Korpuskulum taktil", detail: "Merasakan sentuhan halus" },
       epidermis: { label: "Epidermis", detail: "Lapisan pelindung terluar" },
       dermis: { label: "Dermis", detail: "Saraf, pembuluh, dan kelenjar" },
       hypodermis: { label: "Hipodermis", detail: "Lemak dan penyekat panas" },

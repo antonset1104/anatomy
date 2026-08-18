@@ -1,0 +1,17 @@
+{
+  "name": "Anatomy Atelier",
+  "short_name": "Atelier",
+  "description": "Explore medically detailed 3D organs with guided lessons, labelling quizzes, cross-sections, and clinical notes.",
+  "start_url": "/en",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6efe6",
+  "theme_color": "#f6efe6",
+  "categories": ["education", "medical"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

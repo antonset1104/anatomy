@@ -1,0 +1,759 @@
+/* ------------------------------------------------------- specimen library */
+
+.organ-library {
+  padding: var(--space-4) var(--space-3) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-1);
+}
+
+.panel-heading > span {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  font-size: var(--text-3xs);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.panel-heading .mobile-close { display: none; }
+
+.library-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--muted);
+}
+
+.library-search.wide { margin-bottom: var(--space-4); min-height: 42px; }
+
+.library-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: var(--text-xs);
+}
+
+.library-search input::placeholder { color: var(--faint); }
+.library-search button { border: 0; background: none; color: var(--faint); display: grid; place-items: center; }
+
+.system-chips,
+.layer-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.system-chips button,
+.layer-filter button {
+  min-height: 26px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-3xs);
+  transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.system-chips button:hover,
+.layer-filter button:hover { color: var(--ink); }
+
+.system-chips button.active {
+  color: var(--ink-strong);
+  border-color: color-mix(in srgb, var(--chip-accent, var(--accent)), transparent 50%);
+  background: color-mix(in srgb, var(--chip-accent, var(--accent)), transparent 86%);
+}
+
+.layer-filter button.active {
+  color: var(--accent-ink);
+  border-color: color-mix(in srgb, var(--accent), transparent 55%);
+  background: var(--accent-wash);
+}
+
+.organ-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+  flex: 1;
+}
+
+.organ-item {
+  width: 100%;
+  text-align: start;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 46px 1fr 16px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.organ-item:hover { background: var(--surface-hover); }
+
+.organ-item.active {
+  background: color-mix(in srgb, var(--item-accent), transparent 90%);
+  border-color: color-mix(in srgb, var(--item-accent), transparent 60%);
+}
+
+.organ-glyph {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: radial-gradient(circle at 35% 28%, var(--surface-solid), color-mix(in srgb, var(--item-accent), transparent 78%));
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.organ-glyph img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.12);
+}
+
+:root[data-theme="light"] .organ-glyph img,
+:root[data-theme="light"] .organ-card-image img,
+:root[data-theme="light"] .specimen-stamp img,
+:root[data-theme="light"] .modal-figure img { mix-blend-mode: multiply; }
+
+.organ-item-text { min-width: 0; }
+.organ-item b { display: block; font: 500 var(--text-md) / 1.15 var(--font-display); }
+.organ-item small { display: block; margin-top: 2px; color: var(--muted); font-size: var(--text-3xs); }
+
+.organ-progress {
+  display: block;
+  height: 3px;
+  margin-top: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.organ-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--item-accent);
+  transition: inline-size var(--duration-mid) var(--ease-out);
+}
+
+.organ-item .favorite { color: var(--accent); }
+.library-count { margin: 0; color: var(--faint); font-size: var(--text-3xs); text-align: center; }
+
+.organ-library blockquote {
+  display: none;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------------------- inspector */
+
+.info-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.info-head { padding: var(--space-4) var(--space-4) 0; }
+
+.info-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-3xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+.info-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.info-title-row h1 {
+  margin: 0;
+  font-size: var(--text-hero);
+  line-height: 0.98;
+  color: var(--ink-strong);
+}
+
+.info-title-row em {
+  display: block;
+  margin-top: 6px;
+  color: var(--violet);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+}
+
+.specimen-stamp {
+  width: 74px;
+  height: 74px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle, var(--surface-solid) 25%, var(--accent-wash));
+}
+
+.specimen-stamp img { width: 100%; height: 100%; object-fit: cover; }
+
+.info-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-3);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  margin: var(--space-3) var(--space-4) 0;
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-bar button {
+  position: relative;
+  border: 0;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.tab-bar button.active { color: var(--ink-strong); font-weight: 600; }
+
+.tab-bar button.active:after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--space-2);
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tab-body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-4);
+}
+
+.tab-body h2 {
+  margin: var(--space-5) 0 var(--space-2);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--muted);
+}
+
+.tab-body h2:first-child { margin-top: 0; }
+
+.description {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.5;
+}
+
+.mastery-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.mastery-row p { margin: 4px 0 6px; font-family: var(--font-display); font-size: var(--text-sm); }
+
+.key-facts { margin: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+
+.key-facts > div {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.key-facts dt {
+  display: flex;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+}
+
+.key-facts dt span { color: var(--accent); width: 14px; }
+.key-facts dd { margin: 0; color: var(--muted); font-size: var(--text-xs); line-height: 1.4; }
+
+.medical-note,
+.fun-note {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.medical-note { background: color-mix(in srgb, var(--violet), transparent 90%); color: var(--violet); }
+.fun-note { background: color-mix(in srgb, var(--amber), transparent 88%); color: var(--amber); }
+.medical-note svg, .fun-note svg { flex: none; margin-top: 1px; }
+.medical-note p, .fun-note p { margin: 0; font-size: var(--text-xs); line-height: 1.45; }
+.medical-note b, .fun-note b { display: block; margin-bottom: 2px; color: var(--ink); }
+
+.related-row { display: flex; flex-direction: column; gap: 6px; }
+
+.related-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px var(--space-3) 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  text-align: start;
+}
+
+.related-card:hover { background: var(--surface-hover); }
+.related-card b { flex: 1; font: 500 var(--text-sm) var(--font-display); }
+.related-card .organ-glyph { width: 34px; height: 34px; }
+.related-card svg { color: var(--faint); }
+
+.action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: var(--space-4);
+}
+
+.action-grid button {
+  min-height: 36px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-2xs);
+  transition: color var(--duration-fast), background var(--duration-fast);
+}
+
+.action-grid button:hover { color: var(--ink); background: var(--surface-hover); }
+.action-grid button:last-child { grid-column: 1 / -1; }
+.action-grid button.active { color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent), transparent 55%); background: var(--accent-wash); }
+
+/* -------------------------------------------------------- structure list */
+
+.structure-list {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.structure-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.structure-list li:hover { background: var(--surface-hover); }
+
+.structure-list li.active {
+  border-color: color-mix(in srgb, var(--dot), transparent 50%);
+  background: color-mix(in srgb, var(--dot), transparent 90%);
+}
+
+.structure-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0 0 0 var(--space-4);
+  background: none;
+  text-align: start;
+  position: relative;
+}
+
+.structure-main:before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+
+.structure-main b { display: block; font: 500 var(--text-sm) var(--font-display); }
+.structure-main small { display: block; color: var(--muted); font-size: var(--text-3xs); }
+.structure-main i { color: var(--faint); font-size: var(--text-3xs); }
+
+.structure-side { display: flex; gap: 3px; }
+
+.structure-side .tick {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--faint);
+}
+
+.structure-side .tick:hover { color: var(--ink); background: var(--surface-hover); }
+
+.structure-side .tick.on {
+  color: #fff;
+  border-color: transparent;
+  background: var(--positive);
+}
+
+.condition-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.condition-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  font-size: var(--text-xs);
+}
+
+.condition-list svg { color: var(--accent); flex: none; }
+
+.tissue-row { display: flex; align-items: center; gap: var(--space-3); }
+.tissue-row p { margin: 0; font-family: var(--font-display); font-size: var(--text-sm); }
+
+.tissue-row .microscope-visual {
+  width: 68px;
+  height: 68px;
+  flex: none;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.tissue-row .microscope-visual img { width: 100%; height: 100%; object-fit: cover; }
+
+.disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: var(--space-5);
+  color: var(--faint);
+  font-size: var(--text-3xs);
+  line-height: 1.5;
+}
+
+.disclaimer svg { flex: none; margin-top: 2px; }
+
+.note-input {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  resize: vertical;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.note-actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+
+.note-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-2xs);
+}
+
+/* ----------------------------------------------------------- learning cards */
+
+.learning-cards {
+  /* Cap on the artwork box. The source illustrations are square, so this is
+     both the height and the width they letterbox into. */
+  --art-max: 200px;
+  --card-gap-top: var(--space-2);
+  --card-gap-bottom: var(--space-3);
+  max-width: 1760px;
+  margin: var(--space-4) auto 0;
+  display: grid;
+  grid-template-columns: 1.05fr repeat(5, 1fr);
+  gap: var(--space-3);
+}
+
+.learning-cards article {
+  min-height: 200px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.learning-cards article > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 36px;
+  flex: none;
+  color: var(--muted);
+}
+
+.learning-cards em {
+  display: block;
+  color: var(--violet);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-3xs);
+  font-style: normal;
+}
+
+.learning-cards h3 {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* `:not(.organ-card-image)` keeps the clickable artwork out of the footer
+   button styling — both are direct children of the card. */
+.learning-cards article > button:not(.organ-card-image) {
+  margin-top: auto;
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font: 500 var(--text-2xs) var(--font-display);
+  transition: background var(--duration-fast), border-color var(--duration-fast);
+}
+
+.learning-cards article > button:not(.organ-card-image):hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+
+.curiosity-card {
+  justify-content: center;
+  padding-inline-start: var(--space-6) !important;
+  background: linear-gradient(148deg, var(--accent-wash), color-mix(in srgb, var(--violet), transparent 90%)) !important;
+}
+
+.curiosity-card span { color: var(--mauve); font-size: 26px; }
+.curiosity-card p { margin: var(--space-2) 0 var(--space-2); font: 500 var(--text-lg) / 1.35 var(--font-display); }
+.curiosity-card em { text-transform: none; letter-spacing: 0; font-size: var(--text-sm); }
+
+/* A square box matches the square source art, so the illustration fills the
+   card's full width — up to --art-max, which stops wide columns from making the
+   cards enormous. `contain` means nothing is ever cut. */
+.organ-card-image {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  flex: none;
+  width: min(100%, var(--art-max));
+  max-width: 100%;
+  aspect-ratio: 1;
+  margin: var(--card-gap-top) auto var(--card-gap-bottom);
+}
+
+.organ-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  animation: card-art-in var(--duration-slow) var(--ease-out);
+}
+
+@keyframes card-art-in {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* The tissue swatch is a circular crop by design, so it keeps filling its mask
+   and stays square to avoid becoming an ellipse. */
+.learning-cards .microscope-visual {
+  width: min(var(--art-max), 100%);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 4px var(--surface-raised), var(--shadow-sm);
+}
+
+.learning-cards .microscope-visual img { border-radius: 50%; object-fit: cover; }
+.comparison-visual { border-radius: var(--radius-md); }
+.system-visual { overflow: hidden; border-radius: var(--radius-md); }
+
+/* Reset for the two artwork boxes that are themselves buttons. */
+button.organ-card-image { border: 0; padding: 0; background: transparent; font: inherit; }
+
+.function-visual { position: relative; display: grid; place-items: center; }
+
+/* Centred grid items are not stretched, so `height: 100%` would resolve against
+   an indefinite row and overflow the card. Pin the artwork to the box instead. */
+.function-visual > img,
+.function-visual > .art-fallback { position: absolute; inset: 0; }
+
+.function-pulse {
+  position: absolute;
+  width: 78px;
+  height: 78px;
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 65%);
+  border-radius: 50%;
+  animation: organ-pulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes organ-pulse {
+  0% { opacity: 0.7; transform: scale(0.62); }
+  80%, 100% { opacity: 0; transform: scale(1.35); }
+}
+
+.play-badge {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  pointer-events: none;
+}
+
+/* Same top and bottom gap as an artwork card, so the footer buttons line up. */
+.learning-cards ul {
+  list-style: none;
+  padding: 0;
+  margin: var(--card-gap-top) 0 var(--card-gap-bottom);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  font-size: var(--text-2xs);
+}
+
+.learning-cards li:before {
+  content: "◈";
+  color: var(--accent);
+  margin-inline-end: 7px;
+  font-size: var(--text-3xs);
+}
+
+.art-fallback { font-size: 32px; }
+.organ-card-image .art-fallback { font-size: 42px; }
+.organ-glyph .art-fallback { font-size: 20px; }
+.modal-figure .art-fallback { font-size: 60px; }
+
+@media (max-width: 1400px) {
+  .learning-cards { grid-template-columns: repeat(3, 1fr); --art-max: 260px; }
+}
+
+@media (max-width: 1120px) {
+  .organ-library blockquote { display: none; }
+}
+
+@media (max-width: 780px) {
+  .learning-cards { grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-2); --art-max: 300px; }
+  .learning-cards article { border-radius: var(--radius-md); }
+  .curiosity-card { display: none !important; }
+
+  .organ-library {
+    position: fixed;
+    z-index: 42;
+    inset-inline: var(--space-2);
+    bottom: var(--space-2);
+    height: min(78vh, 640px);
+    transform: translateY(112%);
+    border-radius: var(--radius-xl);
+    background: var(--surface-solid);
+    transition: transform var(--duration-mid) var(--ease-out);
+  }
+
+  .organ-library.open { transform: translateY(0); }
+  .panel-heading .mobile-close { display: grid; }
+
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+    background: rgba(10, 8, 6, 0.4);
+    backdrop-filter: blur(5px);
+  }
+}
+
+@media (min-width: 781px) {
+  .drawer-backdrop { display: none; }
+}
+
+@media (max-width: 480px) {
+  .learning-cards { grid-template-columns: 1fr; --art-max: 340px; }
+}
