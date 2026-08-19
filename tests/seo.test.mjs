@@ -22,7 +22,7 @@ import test from "node:test";
 import { localeCodes, locales } from "../app/i18n/config.ts";
 import { organIds, systemIds } from "../app/lib/anatomy-data.ts";
 
-const ORIGIN = "https://anatomy-atelier.openai.site";
+const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "https://anatomy.vijeron.com";
 const CLIENT_DIR = new URL("../dist/client/", import.meta.url);
 
 async function fetchPath(path) {
@@ -177,10 +177,9 @@ test("system and collection pages declare their members", async () => {
   assert.ok(collection.mainEntity.numberOfItems >= 60);
 });
 
-test("article pages ship no ad markup until a publisher id is configured", async () => {
+test("article pages include the configured AdSense script", async () => {
   const markup = await html("/en/organ/heart");
-  assert.doesNotMatch(markup, /adsbygoogle/, "an unconfigured deployment must not emit ad code");
-  assert.doesNotMatch(markup, /pagead2\.googlesyndication/);
+  assert.match(markup, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-6180580801533680/);
 });
 
 test("robots.txt allows crawling and points at the sitemap", async () => {
@@ -215,9 +214,9 @@ test("the sitemap lists every page in every locale with its alternates", async (
   assert.equal(alternates.length, locs.length * (localeCodes.length + 1));
 });
 
-test("ads.txt stays absent until a publisher id is configured", async () => {
+test("ads.txt contains configured AdSense publisher ID", async () => {
   const body = await readStaticFile("ads.txt");
-  assert.equal(body, null, "an unmonetised site must not authorise a seller");
+  assert.match(body ?? "", /google\.com, pub-6180580801533680, DIRECT, f08c47fec0942fa0/);
 });
 
 test("translated pages localise their own metadata", async () => {

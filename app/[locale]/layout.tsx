@@ -68,6 +68,11 @@ export default async function LocaleLayout({
   return (
     <html lang={config.code} dir={config.dir} suppressHydrationWarning>
       <head>
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6180580801533680"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
       <body className={fontClassName(config.script)}>{children}</body>
