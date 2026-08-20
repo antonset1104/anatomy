@@ -53,6 +53,8 @@ test("server-renders the English workspace", async () => {
   // has to be inline in <head> rather than deferred with the bundle.
   assert.match(html, /root\.dataset\.theme = theme/, "expected the no-flash theme bootstrap");
   assert.match(html, /anatomy-atelier:v2/);
+  assert.match(html, /googletagmanager\.com\/gtag\/js\?id=G-79X7K7H4MJ/);
+  assert.match(html, /gtag\('config', 'G-79X7K7H4MJ'\);/);
   assert.match(html, /manifest\.webmanifest/);
   assert.match(html, /Skip to the specimen viewer/);
   assert.match(html, /role="dialog"|aria-label="3D viewer tools"/);
