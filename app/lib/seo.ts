@@ -5,12 +5,20 @@ import { locales, type LocaleConfig } from "../i18n/config";
  * Absolute URLs for canonicals, og:image, and the sitemap, resolved per host so
  * a preview deployment never advertises another origin's assets — and never
  * competes with production in the index.
+ *
+ * Fallback-nya adalah anatomy.vijeron.com, yaitu custom domain yang dipakai
+ * wrangler.jsonc. Sebelumnya fallback ini menunjuk host template asal, dan
+ * karena NEXT_PUBLIC_SITE_URL tidak pernah di-set pada build Cloudflare,
+ * setiap canonical, hreflang, dan sitemap produksi mengaku milik host itu —
+ * persis skenario "quietly de-index the site" yang diperingatkan .env.example.
+ * tests/seo.test.mjs juga sudah memakai anatomy.vijeron.com sebagai default,
+ * jadi nilai ini menyelaraskan kode dengan pengujiannya.
  */
 export const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : "https://anatomy-atelier.openai.site")
+    : "https://anatomy.vijeron.com")
 ).replace(/\/$/, "");
 
 export const siteName = "Anatomy Atelier";
