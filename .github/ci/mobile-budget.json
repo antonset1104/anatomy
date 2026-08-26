@@ -1,0 +1,12 @@
+{
+  "name": "Anatomy Atelier",
+  "root": "dist/client",
+  "entry": "/en/index.html",
+  "settleMs": 3000,
+  "budgets": {
+    "overflowPx": 0,
+    "smallTargets": 0,
+    "minFontPx": 12.5,
+    "pageErrors": 0
+  }
+}

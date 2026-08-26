@@ -1,0 +1,54 @@
+name: CI
+
+# Setiap dorongan ke main memicu deploy otomatis Cloudflare Pages. Pemeriksaan
+# ini berjalan pada dorongan yang sama, jadi kalau ada yang merah, penyebabnya
+# terlihat berdampingan dengan deploy-nya — bukan baru ketahuan lewat audit
+# manual berminggu-minggu kemudian.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # NODE_ENV=production membuat npm menyimpulkan omit=dev, sehingga
+      # devDependencies — termasuk vite dan typescript — tidak ikut terpasang
+      # dan build gagal dengan "tsc: command not found". Ini pernah terjadi.
+      - name: Pastikan devDependencies ikut terpasang
+        run: |
+          if [ "${NODE_ENV:-}" = "production" ]; then
+            echo "NODE_ENV=production akan membuat npm melewati devDependencies." >&2
+            exit 1
+          fi
+          npm ci
+
+      # Repo ini sudah punya 30 tes yang memeriksa canonical, hreflang,
+      # sitemap, JSON-LD, dan keselarasan skrip AdSense dengan ads.txt.
+      # `npm test` menjalankan build lebih dulu, jadi ini sekaligus build.
+      - name: Build dan uji
+        run: npm test
+        env:
+          NEXT_PUBLIC_SITE_URL: https://anatomy.vijeron.com
+
+      - name: Audit tampilan ponsel
+        run: |
+          npm install -g playwright@1.56.0
+          npx playwright install --with-deps chromium
+          PLAYWRIGHT_MODULE="$(npm root -g)/playwright/index.js" \
+            node .github/ci/audit-mobile.mjs
