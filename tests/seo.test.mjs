@@ -177,10 +177,6 @@ test("system and collection pages declare their members", async () => {
   assert.ok(collection.mainEntity.numberOfItems >= 60);
 });
 
-test("article pages include the configured AdSense script", async () => {
-  const markup = await html("/en/organ/heart");
-  assert.match(markup, /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-6180580801533680/);
-});
 
 test("robots.txt allows crawling and points at the sitemap", async () => {
   const body = await readStaticFile("robots.txt");
@@ -214,9 +210,36 @@ test("the sitemap lists every page in every locale with its alternates", async (
   assert.equal(alternates.length, locs.length * (localeCodes.length + 1));
 });
 
-test("ads.txt contains configured AdSense publisher ID", async () => {
-  const body = await readStaticFile("ads.txt");
-  assert.match(body ?? "", /google\.com, pub-6180580801533680, DIRECT, f08c47fec0942fa0/);
+/**
+ * Skrip AdSense dan ads.txt harus selalu muncul bersama-sama, atau sama sekali
+ * tidak muncul.
+ *
+ * Dua tes lama masing-masing mengunci publisher id ca-pub-6180580801533680.
+ * Salah satunya lulus karena id itu ditulis langsung di layout.tsx; yang lain
+ * gagal karena ads.txt dibangkitkan dari env yang tidak diset. Kegagalan itu
+ * justru menandai cacat aslinya: build tanpa env tetap memuat pustaka publisher
+ * di setiap halaman sementara /ads.txt mengembalikan 404 — bagi Google, sebuah
+ * situs yang memuat AdSense tanpa satu pun authorized-seller record.
+ *
+ * Yang benar-benar perlu dijaga adalah invariannya, bukan angkanya.
+ */
+test("the AdSense library and ads.txt appear together, or not at all", async () => {
+  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const markup = await html("/en/organ/heart");
+  const script = /pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=([^"&]+)/.exec(markup);
+  const adsTxt = await readStaticFile("ads.txt");
+
+  if (!client) {
+    assert.equal(script, null, "no publisher id is configured, yet the AdSense library is loaded");
+    assert.equal(adsTxt, null, "no publisher id is configured, yet ads.txt was written");
+    return;
+  }
+
+  assert.ok(script, "a publisher id is configured, yet the AdSense library is not loaded");
+  assert.equal(decodeURIComponent(script[1]), client);
+
+  const publisherId = client.replace(/^ca-/, "");
+  assert.match(adsTxt ?? "", new RegExp(`google\\.com, ${publisherId}, DIRECT, f08c47fec0942fa0`));
 });
 
 test("translated pages localise their own metadata", async () => {

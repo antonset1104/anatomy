@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getLocale, isLocale, localeCodes } from "../i18n/config";
 import { fontClassName } from "../i18n/fonts";
 import { siteUrl } from "../lib/seo";
+import { adConfig } from "../lib/ads";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -64,6 +65,7 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const config = getLocale(locale);
+  const ads = adConfig();
 
   return (
     <html lang={config.code} dir={config.dir} suppressHydrationWarning>
@@ -84,11 +86,25 @@ export default async function LocaleLayout({
 `,
           }}
         />
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6180580801533680"
-          crossOrigin="anonymous"
-        />
+        {/*
+          Publisher id dibaca dari env, bukan ditulis langsung.
+
+          Sebelumnya id ini di-hardcode di sini, sementara app/lib/ads.ts dan
+          app/lib/static-files.ts sama-sama membaca NEXT_PUBLIC_ADSENSE_CLIENT —
+          sehingga pada build tanpa env, skrip AdSense tetap dimuat di setiap
+          halaman padahal /ads.txt mengembalikan 404 dan seluruh slot iklan
+          merender null. Bagi Google itu berarti sebuah situs memuat pustaka
+          publisher tanpa satu pun authorized-seller record yang bisa
+          diverifikasi. Dengan perubahan ini, skrip dan ads.txt selalu muncul
+          atau tidak muncul bersama-sama.
+        */}
+        {ads.client ? (
+          <script
+            async
+            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(ads.client)}`}
+            crossOrigin="anonymous"
+          />
+        ) : null}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
       </head>
       <body className={fontClassName(config.script)}>{children}</body>
