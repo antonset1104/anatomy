@@ -70,6 +70,16 @@ export default async function LocaleLayout({
   return (
     <html lang={config.code} dir={config.dir} suppressHydrationWarning>
       <head>
+        {/* Google Funding Choices (CMP) - EU User Consent Policy Compliance */}
+        <script
+          async
+          src="https://fundingchoicesmessages.google.com/i/pub-6180580801533680?ers=1"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){function signalGooglefcPresent(){if(!window.frames['googlefcPresent']){if(document.body){var iframe=document.createElement('iframe');iframe.style.cssText='width:0;height:0;border:none;';iframe.style.display='none';iframe.name='googlefcPresent';document.body.appendChild(iframe);}else{setTimeout(signalGooglefcPresent,0);}}}signalGooglefcPresent();})();`,
+          }}
+        />
         {/* Google tag (gtag.js) */}
         <script
           async
