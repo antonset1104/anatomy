@@ -6,7 +6,8 @@
  * read the env here and hand the values down as props.
  *
  * Nothing is hard-coded. With `NEXT_PUBLIC_ADSENSE_CLIENT` unset, every slot
- * renders `null`, `/ads.txt` returns 404, and no third-party script is loaded.
+ * renders `null` and no AdSense script is loaded. `/ads.txt` can still list
+ * another approved network through `ADS_TXT_EXTRA_RECORDS`.
  * Set the publisher id and the slot ids to switch monetisation on:
  *
  *   NEXT_PUBLIC_ADSENSE_CLIENT=ca-pub-0000000000000000

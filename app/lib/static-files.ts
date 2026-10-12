@@ -111,24 +111,25 @@ export function sitemapXml(): string | null {
 const GOOGLE_TAG_ID = "f08c47fec0942fa0";
 
 /**
- * Returns `null` — meaning "do not write this file" — until a publisher id is
- * configured. An absent `ads.txt` and a 404 for it are the same signal to an ad
- * exchange: this site sells nothing (yet).
+ * Returns `null` — meaning "do not write this file" — until at least one
+ * authorized seller is configured. A non-AdSense network can supply its own
+ * records without requiring an AdSense publisher id.
  */
 export function adsTxt(): string | null {
   const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
   // AdSense ids arrive as `ca-pub-…`; ads.txt wants the bare publisher id.
   const publisherId = client?.replace(/^ca-/, "").trim();
-  if (!publisherId || !/^pub-\d{10,20}$/.test(publisherId)) return null;
-
-  const lines = [`google.com, ${publisherId}, DIRECT, ${GOOGLE_TAG_ID}`];
-
-  // Any additional sellers — an ad manager, a mediation partner — as a
-  // comma-separated list of complete ads.txt records.
-  const extra = process.env.ADS_TXT_EXTRA_RECORDS;
-  if (extra) {
-    lines.push(...extra.split(/[\n,](?=\s*[a-z0-9.-]+\s*,)/i).map((line) => line.trim()).filter(Boolean));
+  const lines: string[] = [];
+  if (publisherId && /^pub-\d{10,20}$/.test(publisherId)) {
+    lines.push(`google.com, ${publisherId}, DIRECT, ${GOOGLE_TAG_ID}`);
   }
 
-  return `${lines.join("\n")}\n`;
+  // Any additional sellers — an ad manager, a mediation partner — as
+  // newline-separated complete ads.txt records. Commas belong to each record.
+  const extra = process.env.ADS_TXT_EXTRA_RECORDS;
+  if (extra) {
+    lines.push(...extra.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  }
+
+  return lines.length ? `${lines.join("\n")}\n` : null;
 }

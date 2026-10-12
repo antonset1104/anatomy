@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendor decoder bundles copied unchanged into public assets.
+    "public/basis/**",
+    "public/draco/**",
   ]),
 ]);
 

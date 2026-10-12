@@ -231,7 +231,10 @@ test("the AdSense library and ads.txt appear together, or not at all", async () 
 
   if (!client) {
     assert.equal(script, null, "no publisher id is configured, yet the AdSense library is loaded");
-    assert.equal(adsTxt, null, "no publisher id is configured, yet ads.txt was written");
+    assert.doesNotMatch(adsTxt ?? "", /^google\.com, pub-\d+, DIRECT, f08c47fec0942fa0$/m);
+    if (!process.env.ADS_TXT_EXTRA_RECORDS) {
+      assert.equal(adsTxt, null, "no authorized seller is configured, yet ads.txt was written");
+    }
     return;
   }
 

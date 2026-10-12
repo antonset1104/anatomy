@@ -69,8 +69,8 @@ const { adsTxt, robotsTxt, sitemapXml } = await import("../app/lib/static-files.
 async function write(name, content) {
   const path = `${PUBLIC_DIR}${name}`;
   if (content === null) {
-    // Absent on disk is the correct state — e.g. no ads.txt until a publisher
-    // id is configured, or no sitemap on a build marked non-indexable. Remove
+    // Absent on disk is the correct state — e.g. no ads.txt until an authorized
+    // seller is configured, or no sitemap on a build marked non-indexable. Remove
     // any stale copy from a previous, differently-configured build.
     await rm(path, { force: true });
     console.log(`  ${name}  skipped (not applicable to this build)`);

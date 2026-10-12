@@ -135,6 +135,10 @@ Nothing is hard-coded and nothing loads by default. Set
 - `/ads.txt` starts serving, generated from the publisher id rather than
   committed, so the repository never carries someone else's account number.
 
+For another approved network, add only its supplied seller records to
+`ADS_TXT_EXTRA_RECORDS`. This generates `/ads.txt` even while AdSense is unset;
+the network's ad tag and approval remain separate setup steps.
+
 With the publisher id unset, `AdSlot` renders `null` — not an empty box — so an
 unmonetised deployment has no holes in its layout and ships no ad code at all.
 
