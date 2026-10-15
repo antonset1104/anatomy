@@ -116,6 +116,7 @@ export default async function LocaleLayout({
           />
         ) : null}
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        <script defer src="https://vijeron.com/assets/vijeron-ads.js" />
       </head>
       <body className={fontClassName(config.script)}>{children}</body>
     </html>
