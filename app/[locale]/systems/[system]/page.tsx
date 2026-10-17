@@ -17,8 +17,8 @@ import { adConfig } from "../../../lib/ads";
 
 type Params = { locale: string; system: string };
 
-export function generateStaticParams() {
-  return localeCodes.flatMap((locale) => systemIds.map((system) => ({ locale, system })));
+export function generateStaticParams({ params }: { params: { locale?: string } } = { params: {} }) {
+  return (params.locale ? [params.locale] : localeCodes).flatMap((locale) => systemIds.map((system) => ({ locale, system })));
 }
 
 async function resolve({ locale, system }: Params) {

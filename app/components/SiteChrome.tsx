@@ -4,6 +4,7 @@ import type { LocaleConfig } from "../i18n/config";
 import { locales } from "../i18n/config";
 import { format, type UiDictionary } from "../i18n/types";
 import { routes } from "../lib/routes";
+import { studentNav } from "../lib/student-ui";
 
 /**
  * Header and footer for the content pages. Server components with no client
@@ -12,10 +13,13 @@ import { routes } from "../lib/routes";
  */
 export function SiteHeader({ locale, t }: { locale: LocaleConfig; t: UiDictionary }) {
   const nav = [
+    { href: routes.study(locale.code), label: studentNav[locale.code].study },
     { href: routes.systems(locale.code), label: t.pages.systemsTitle },
     { href: routes.glossary(locale.code), label: t.pages.glossaryTitle },
     { href: routes.lessons(locale.code), label: t.pages.lessonsTitle },
     { href: routes.about(locale.code), label: t.pages.aboutTitle },
+    { href: routes.donate(locale.code), label: studentNav[locale.code].donate },
+    { href: routes.contact(locale.code), label: studentNav[locale.code].contact },
   ];
 
   return (
@@ -56,11 +60,15 @@ export function SiteFooter({
   locale,
   t,
   organLinks,
+  languagePath = "",
+  availableLocaleCodes,
 }: {
   locale: LocaleConfig;
   t: UiDictionary;
   /** Passed in so the footer doubles as a crawlable index of every specimen. */
   organLinks: { name: string; href: string }[];
+  languagePath?: string;
+  availableLocaleCodes?: readonly string[];
 }) {
   const year = new Date().getUTCFullYear();
 
@@ -83,6 +91,9 @@ export function SiteFooter({
             <li><Link href={routes.systems(locale.code)}>{t.pages.systemsTitle}</Link></li>
             <li><Link href={routes.glossary(locale.code)}>{t.pages.glossaryTitle}</Link></li>
             <li><Link href={routes.lessons(locale.code)}>{t.pages.lessonsTitle}</Link></li>
+            <li><Link href={routes.study(locale.code)}>{studentNav[locale.code].study}</Link></li>
+            <li><Link href={routes.donate(locale.code)}>{studentNav[locale.code].donate}</Link></li>
+            <li><Link href={routes.contact(locale.code)}>{studentNav[locale.code].contact}</Link></li>
             <li><Link href={routes.about(locale.code)}>{t.pages.aboutTitle}</Link></li>
             <li><Link href={routes.privacy(locale.code)}>{t.pages.privacyTitle}</Link></li>
           </ul>
@@ -93,9 +104,9 @@ export function SiteFooter({
         <div className="site-footer-col">
           <h2>{t.language.label}</h2>
           <ul className="site-footer-locales">
-            {locales.map((entry) => (
+            {locales.filter(entry => !availableLocaleCodes || availableLocaleCodes.includes(entry.code)).map((entry) => (
               <li key={entry.code}>
-                <Link href={`/${entry.code}`} hrefLang={entry.code} lang={entry.code}>
+                <Link href={`/${entry.code}${languagePath}`} hrefLang={entry.code} lang={entry.code}>
                   {entry.nativeName}
                 </Link>
               </li>

@@ -18,8 +18,8 @@ import { MetricBar } from "../../../components/primitives";
 
 type Params = { locale: string; organ: string };
 
-export function generateStaticParams() {
-  return localeCodes.flatMap((locale) => organIds.map((organ) => ({ locale, organ })));
+export function generateStaticParams({ params }: { params: { locale?: string } } = { params: {} }) {
+  return (params.locale ? [params.locale] : localeCodes).flatMap((locale) => organIds.map((organ) => ({ locale, organ })));
 }
 
 /** Loads the locale, the specimen, and the joined dictionary in one place. */

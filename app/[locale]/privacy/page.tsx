@@ -7,6 +7,8 @@ import { format } from "../../i18n/types";
 import { routes } from "../../lib/routes";
 import { absolute, breadcrumbGraph, pageMetadata } from "../../lib/seo";
 import { POLICY_DATE } from "../../lib/content-meta";
+import { supportCopy } from "../../lib/support";
+import { studentNav, studyUi } from "../../lib/student-ui";
 import { Breadcrumbs, SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { StructuredData } from "../../components/StructuredData";
 
@@ -88,6 +90,8 @@ export default async function PrivacyPage({ params }: { params: Promise<Params> 
               <p>{section.body}</p>
             </section>
           ))}
+          <section><h2>{studentNav[locale].contact} / {studentNav[locale].donate}</h2><p>{supportCopy[locale].privacy}</p></section>
+          {(locale === "en" || locale === "id") && <section><h2>{studentNav[locale].study}</h2><p>{studyUi(locale).storage}</p></section>}
         </article>
       </main>
 

@@ -2,6 +2,7 @@ import { localeCodes, locales } from "../i18n/config";
 import { organIds, systemIds } from "./anatomy-data";
 import { REVIEWED_DATE } from "./content-meta";
 import { absolute, isIndexable } from "./seo";
+import { studyLanguages, studyModuleIds, STUDY_UPDATED } from "./medical-study";
 
 /**
  * Content for the three crawler-facing files (`robots.txt`, `sitemap.xml`,
@@ -39,13 +40,16 @@ export function robotsTxt(): string {
   ].join("\n");
 }
 
-type SitemapEntry = { path: (locale: string) => string; priority: number; changefreq: string };
+type SitemapEntry = { path: (locale: string) => string; priority: number; changefreq: string; languages?: readonly string[]; modified?: string };
 
 const SITEMAP_ENTRIES: SitemapEntry[] = [
   { path: (locale) => `/${locale}`, priority: 1.0, changefreq: "weekly" },
   { path: (locale) => `/${locale}/systems`, priority: 0.8, changefreq: "monthly" },
   { path: (locale) => `/${locale}/glossary`, priority: 0.8, changefreq: "monthly" },
   { path: (locale) => `/${locale}/lessons`, priority: 0.7, changefreq: "monthly" },
+  { path: (locale) => `/${locale}/study`, priority: 0.9, changefreq: "monthly", languages: studyLanguages, modified: STUDY_UPDATED },
+  { path: (locale) => `/${locale}/contact`, priority: 0.3, changefreq: "yearly", modified: STUDY_UPDATED },
+  ...studyModuleIds.map(module => ({ path: (locale: string) => `/${locale}/study/${module}`, priority: 0.8, changefreq: "monthly", languages: studyLanguages, modified: STUDY_UPDATED })),
   { path: (locale) => `/${locale}/about`, priority: 0.4, changefreq: "yearly" },
   { path: (locale) => `/${locale}/privacy`, priority: 0.2, changefreq: "yearly" },
   ...organIds.map((organ) => ({
@@ -77,8 +81,8 @@ export function sitemapXml(): string | null {
   if (!isIndexable) return null;
 
   const urls = SITEMAP_ENTRIES.flatMap((entry) =>
-    localeCodes.map((locale) => {
-      const alternates = locales
+    (entry.languages ?? localeCodes).map((locale) => {
+      const alternates = locales.filter(other => !entry.languages || entry.languages.includes(other.code))
         .map(
           (other) =>
             `    <xhtml:link rel="alternate" hreflang="${other.code}" href="${escapeXml(absolute(entry.path(other.code)))}"/>`,
@@ -89,7 +93,7 @@ export function sitemapXml(): string | null {
       return [
         "  <url>",
         `    <loc>${escapeXml(absolute(entry.path(locale)))}</loc>`,
-        `    <lastmod>${REVIEWED_DATE}</lastmod>`,
+        `    <lastmod>${entry.modified ?? (entry.path(locale).endsWith('/privacy') ? STUDY_UPDATED : REVIEWED_DATE)}</lastmod>`,
         `    <changefreq>${entry.changefreq}</changefreq>`,
         `    <priority>${entry.priority.toFixed(1)}</priority>`,
         alternates,

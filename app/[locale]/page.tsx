@@ -10,6 +10,7 @@ import { getLocale, isLocale, localeCodes } from "../i18n/config";
 import { buildOrgans, buildSystems } from "../i18n/merge";
 import { format } from "../i18n/types";
 import { routes } from "../lib/routes";
+import { studentNav } from "../lib/student-ui";
 import { absolute, pageMetadata, websiteGraph } from "../lib/seo";
 
 type Params = { locale: string };
@@ -67,6 +68,11 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         ]}
       />
 
+      <nav className="student-entry-nav" aria-label={studentNav[locale].study}>
+        <Link href={routes.study(locale)}>{studentNav[locale].study} →</Link>
+        <Link href={routes.donate(locale)}>{studentNav[locale].donate}</Link>
+        <Link href={routes.contact(locale)}>{studentNav[locale].contact}</Link>
+      </nav>
       <AnatomyApp locale={config} dictionary={dictionary} />
 
       {/*
@@ -77,6 +83,11 @@ export default async function Home({ params }: { params: Promise<Params> }) {
       */}
       <section className="studio-index" aria-labelledby="studio-index-heading">
         <div className="studio-index-inner">
+          <nav className="study-controls" aria-label={studentNav[locale].study}>
+            <Link href={routes.study(locale)}>{studentNav[locale].study} →</Link>
+            <Link href={routes.donate(locale)}>{studentNav[locale].donate}</Link>
+            <Link href={routes.contact(locale)}>{studentNav[locale].contact}</Link>
+          </nav>
           <h2 id="studio-index-heading">{t.pages.organsTitle}</h2>
           <ul className="studio-index-organs">
             {organs.map((organ) => (

@@ -9,4 +9,4 @@
 export const REVIEWED_DATE = "2026-08-18";
 
 /** The date the legal pages were last revised, tracked separately. */
-export const POLICY_DATE = "2026-08-18";
+export const POLICY_DATE = "2026-10-17";

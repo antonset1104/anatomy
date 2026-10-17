@@ -21,6 +21,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { localeCodes, locales } from "../app/i18n/config.ts";
 import { organIds, systemIds } from "../app/lib/anatomy-data.ts";
+import { studyLanguages, studyModuleIds } from "../app/lib/medical-study.ts";
 
 const ORIGIN = process.env.NEXT_PUBLIC_SITE_URL || "https://anatomy.vijeron.com";
 const CLIENT_DIR = new URL("../dist/client/", import.meta.url);
@@ -191,9 +192,9 @@ test("the sitemap lists every page in every locale with its alternates", async (
   assert.ok(body, "sitemap.xml should exist in an indexable build");
 
   const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  // 6 fixed pages + 9 organs + 8 systems, once per locale.
-  const perLocale = 6 + organIds.length + systemIds.length;
-  assert.equal(locs.length, perLocale * localeCodes.length);
+  const perLocale = 7 + organIds.length + systemIds.length;
+  const studyPages = studyLanguages.length * (1 + studyModuleIds.length);
+  assert.equal(locs.length, perLocale * localeCodes.length + studyPages);
   assert.equal(new Set(locs).size, locs.length, "the sitemap repeats a URL");
 
   for (const organ of organIds) {
@@ -207,7 +208,9 @@ test("the sitemap lists every page in every locale with its alternates", async (
   assert.match(body, /xmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/);
   assert.match(body, /hreflang="x-default"/);
   const alternates = [...body.matchAll(/<xhtml:link /g)];
-  assert.equal(alternates.length, locs.length * (localeCodes.length + 1));
+  assert.equal(alternates.length, perLocale * localeCodes.length * (localeCodes.length + 1) + studyPages * (studyLanguages.length + 1));
+  assert.ok(!locs.some(url => url.endsWith('/donate')), "donation pages should not be indexed");
+  assert.ok(!locs.includes(`${ORIGIN}/ja/study`), "language availability pages should not be indexed");
 });
 
 /**

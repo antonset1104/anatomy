@@ -13,6 +13,7 @@ import { Breadcrumbs, SiteFooter, SiteHeader } from "../../components/SiteChrome
 import { StructuredData } from "../../components/StructuredData";
 import { AdSlot } from "../../components/AdSlot";
 import { adConfig } from "../../lib/ads";
+import { studentNav } from "../../lib/student-ui";
 
 type Params = { locale: string };
 
@@ -77,6 +78,7 @@ export default async function LessonsPage({ params }: { params: Promise<Params> 
           <h1>{t.pages.lessonsTitle}</h1>
           <p>{t.pages.lessonsDescription}</p>
         </header>
+        <p><Link className="studio-cta" href={routes.study(locale)}>{studentNav[locale].study} →</Link></p>
 
         <AdSlot client={ads.client} slot={ads.listing} format="leaderboard" label={t.ads.label} />
 

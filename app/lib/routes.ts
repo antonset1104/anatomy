@@ -13,6 +13,9 @@ export const routes = {
   system: (locale: string, system: SystemId) => `/${locale}/systems/${system}`,
   glossary: (locale: string) => `/${locale}/glossary`,
   lessons: (locale: string) => `/${locale}/lessons`,
+  study: (locale: string) => `/${locale}/study`,
+  donate: (locale: string) => `/${locale}/donate`,
+  contact: (locale: string) => `/${locale}/contact`,
   about: (locale: string) => `/${locale}/about`,
   privacy: (locale: string) => `/${locale}/privacy`,
 } as const;
