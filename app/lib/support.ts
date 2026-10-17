@@ -3,9 +3,9 @@ export const PAYPAL_EMAIL = "setiawan.anton@gmail.com";
 // Public receiving addresses copied from the owner's Oracle donation panel.
 export const donationWallets = [
   { asset: "Bitcoin (BTC)", network: "Bitcoin mainnet", address: "1GmDHcHhKiSWszpx4ahTT6CvvQ2zg85J2j" },
-  { asset: "Ethereum (ETH)", network: "Ethereum mainnet", address: "0x5D4Cbe86179C8D62FBEaD26080E0063b903f2197" },
+  { asset: "Ethereum (ETH)", network: "Ethereum mainnet", address: "0x3d1b8F3892e9beBAFF3D59E46BB306E65Fa8a242" },
   { asset: "Litecoin (LTC)", network: "Litecoin mainnet", address: "LarogeGUUDyxUM92uvSjpDzj2sTCnJq9s9" },
-  { asset: "Dogecoin (DOGE)", network: "Dogecoin mainnet", address: "DHwquxawKVTdiKWqonEt8EKUwUtaBgd7g1" },
+  { asset: "Dogecoin (DOGE)", network: "Dogecoin mainnet", address: "DUPiP3wr2o5fzkzpFuvsEe7oAyGAEHsyqB" },
 ] as const;
 type SupportCopy = { lead: string; paypal: string; crypto: string; copy: string; copied: string; failed: string; contact: string; privacy: string; terms: string };
 export const supportCopy: Record<string, SupportCopy> = {
