@@ -95,6 +95,7 @@ export default async function LocaleLayout({
           }}
         />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        <script defer src="https://vijeron.com/assets/vijeron-share.js" />
       </head>
       <body className={fontClassName(config.script)}>{children}</body>
     </html>
