@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   applicationName: "Anatomy Atelier",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [{ url: "/vijeron-mark.png", type: "image/png", sizes: "1024x1024" }],
+    icon: [{ url: "/vijeron-mark.png", type: "image/png", sizes: "1254x1254" }],
     shortcut: "/vijeron-mark.png",
     apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
