@@ -25,6 +25,9 @@
   text-decoration: none;
   color: inherit;
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .site-brand strong {

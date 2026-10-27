@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Cuboid } from "lucide-react";
 import type { LocaleConfig } from "../i18n/config";
 import { locales } from "../i18n/config";
@@ -26,6 +27,7 @@ export function SiteHeader({ locale, t }: { locale: LocaleConfig; t: UiDictionar
     <header className="site-header">
       <div className="site-header-inner">
         <Link href={routes.studio(locale.code)} className="site-brand">
+          <Image src="/vijeron-mark.png" alt="" width={30} height={30} className="vijeron-brand-mark" />
           <strong>Anatomy Atelier<sup>✦</sup></strong>
         </Link>
         <nav aria-label={t.site.nav}>

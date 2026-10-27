@@ -38,12 +38,8 @@ export const metadata: Metadata = {
   applicationName: "Anatomy Atelier",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    shortcut: "/favicon.svg",
+    icon: [{ url: "/vijeron-mark.png", type: "image/png", sizes: "1024x1024" }],
+    shortcut: "/vijeron-mark.png",
     apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
   },
   formatDetection: { telephone: false },

@@ -19,12 +19,17 @@
 
 .brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-3);
   border: 0;
   padding: 0;
   background: transparent;
   text-align: start;
+}
+
+.vijeron-brand-mark {
+  flex: none;
+  object-fit: contain;
 }
 
 .brand strong {

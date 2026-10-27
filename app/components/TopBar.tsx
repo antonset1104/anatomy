@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import {
   BookMarked,
   BrainCircuit,
@@ -112,6 +114,7 @@ export function TopBar({
   return (
     <header className="topbar">
       <button className="brand" type="button" onClick={onHome} aria-label={t.brand.home}>
+        <Image src="/vijeron-mark.png" alt="" width={32} height={32} className="vijeron-brand-mark" />
         <strong>Anatomy Atelier<sup>✦</sup></strong>
         <em>{t.brand.tagline}</em>
       </button>
