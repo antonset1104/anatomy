@@ -22,9 +22,9 @@ export default async function DonatePage({ params }: Props) {
   const { ui } = await getDictionary(locale);
   return <><SiteHeader locale={config} t={ui} /><main className="content-page study-page">
     <header className="page-head"><h1>{studentNav[locale].donate}</h1><p>{t.lead}</p></header>
-    <section className="support-card"><h2>PayPal</h2><p>{t.paypal}</p><CopyValue value={PAYPAL_EMAIL} label={t.copy} copied={t.copied} failed={t.failed} /><a className="studio-cta" href="https://www.paypal.com/" target="_blank" rel="noopener noreferrer">PayPal ↗</a></section>
+    <section className="support-card"><h2>PayPal</h2><p>{t.paypal}</p><CopyValue value={PAYPAL_EMAIL} label={t.copy} copied={t.copied} failed={t.failed} donationMethod="paypal" /><a className="studio-cta" href="https://www.paypal.com/" target="_blank" rel="noopener noreferrer">PayPal ↗</a></section>
     <p className="study-disclosure">{t.crypto}</p>
-    <div className="hub-grid">{donationWallets.map(w => <section className="support-card" key={w.asset}><h2>{w.asset}</h2><p lang="en" dir="ltr">{w.network}</p><CopyValue value={w.address} label={t.copy} copied={t.copied} failed={t.failed} /></section>)}</div>
+    <div className="hub-grid">{donationWallets.map(w => <section className="support-card" key={w.asset}><h2>{w.asset}</h2><p lang="en" dir="ltr">{w.network}</p><CopyValue value={w.address} label={t.copy} copied={t.copied} failed={t.failed} donationMethod={w.asset.toLowerCase()} /></section>)}</div>
     <p>{t.terms}</p><p>{t.privacy}</p><Link className="text-link" href={`/${locale}/contact`}>{studentNav[locale].contact} →</Link>
   </main><SiteFooter locale={config} t={ui} organLinks={[]} languagePath="/donate" /></>;
 }
