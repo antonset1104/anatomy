@@ -20,7 +20,7 @@ export function trackLearningEvent(name: LearningEvent, details: LearningEventDe
   gtag("event", name, {
     content_id: details.contentId,
     content_group: details.contentGroup,
-    language: details.language,
+    content_locale: details.language,
     ...(details.feature ? { feature: details.feature } : {}),
   });
 }
