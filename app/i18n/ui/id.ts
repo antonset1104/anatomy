@@ -278,7 +278,7 @@ export const ui: UiPatch = {
     storageHeading: "Apa yang disimpan di perangkatmu",
     storageBody: "Struktur yang kamu tandai sudah dikuasai, spesimen yang kamu tandai simpan, skor kuis, catatan belajar, rentetan belajar, dan preferensi tampilan disimpan di penyimpanan lokal peramban. Tidak ada yang diunggah, dan tidak ada yang bisa kami baca. Membersihkan data peramban, atau menekan tombol atur ulang di panel kemajuan, menghapus semuanya secara permanen.",
     analyticsHeading: "Analitik",
-    analyticsBody: "Jika analitik agregat diaktifkan pada penyebaran ini, yang direkam hanyalah tampilan halaman dan lokasi setingkat negara. Data itu tidak terikat pada identitas dan tidak bisa dilacak kembali ke pembaca tertentu.",
+    analyticsBody: "Google Analytics mengukur tampilan halaman dan interaksi belajar, seperti membuka modul, menandainya selesai, menyelesaikan kuis, dan memulai model 3D. Event berisi ID konten tetap, kelompok konten, fitur, dan bahasa jika relevan; jawaban, skor, catatan, dan data pasien tidak dikirim. Google dapat memproses informasi teknis dan pengenal cookie sesuai kebijakan privasinya.",
     adsHeading: "Iklan",
     adsBody: "Situs ini mungkin menampilkan iklan untuk menutup biaya hosting. Bila iklan disajikan jaringan pihak ketiga, jaringan itu dapat menaruh kuki atau membaca pengenal perangkat untuk memilih iklan dan mengukur apakah iklan terlihat. Perilaku itu diatur kebijakan privasi jaringan tersebut, bukan kebijakan ini. Di wilayah yang mensyaratkannya, kamu akan dimintai persetujuan sebelum iklan yang dipersonalisasi disajikan, dan menolak tetap membuat situs bisa dipakai sepenuhnya.",
     childrenHeading: "Pembaca usia muda",

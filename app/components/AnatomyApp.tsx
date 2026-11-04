@@ -21,6 +21,7 @@ import { format, type Dictionary } from "../i18n/types";
 import { actions, hydrate, masteryPercent, newAchievements, subscribeToStore, useStore, type Prefs } from "../lib/store";
 import { buildGrandTour, buildLessons, type Lesson } from "../lib/lessons";
 import { readDeepLink, shareUrl, writeDeepLink, type ViewName } from "../lib/url-state";
+import { trackLearningEvent } from "../lib/learning-analytics";
 
 type Sheet = "systems" | "glossary" | "lessons" | "progress" | "settings" | "share" | "quiz" | null;
 
@@ -95,11 +96,12 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
    */
   const pendingFocusRef = useRef<{ organId: OrganId; hotspotId: string } | null>(null);
   const onOrganReady = useCallback((readyOrganId: OrganId) => {
+    trackLearningEvent("simulator_start", { contentId: readyOrganId, contentGroup: "anatomy_3d", language: locale.code });
     const pending = pendingFocusRef.current;
     if (pending?.organId !== readyOrganId) return;
     pendingFocusRef.current = null;
     viewerRef.current?.selectHotspot(pending.hotspotId, true);
-  }, []);
+  }, [locale.code]);
 
   // Reduced motion is folded in here rather than pushed into state, so the
   // learner's own toggle survives turning the preference back off.
@@ -207,12 +209,13 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
 
   const startLesson = useCallback(
     (target: Lesson) => {
+      trackLearningEvent("content_open", { contentId: target.id, contentGroup: "anatomy_3d", language: locale.code });
       setQuiz(null);
       setSheet(null);
       setLesson(target);
       if (target.organId && target.organId !== organId) selectOrgan(target.organId);
     },
-    [organId, selectOrgan],
+    [organId, selectOrgan, locale.code],
   );
 
   const exportNotes = useCallback(() => {
@@ -351,7 +354,10 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
                   }
                   actions.markLearned(stepOrgan, hotspotId);
                 }}
-                onComplete={() => actions.completeLesson(lesson.id)}
+                onComplete={() => {
+                  actions.completeLesson(lesson.id);
+                  trackLearningEvent("content_complete", { contentId: lesson.id, contentGroup: "anatomy_3d", language: locale.code });
+                }}
                 onExit={() => setLesson(null)}
               />
             )}
@@ -367,7 +373,15 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
                 flash={(id, correct) => viewerRef.current?.flash(id, correct)}
                 screenY={(id) => viewerRef.current?.screenY(id) ?? null}
                 onLearned={(target, hotspotId) => actions.markLearned(target, hotspotId)}
-                onFinish={(score, total) => actions.recordQuiz(score, total)}
+                onFinish={(score, total) => {
+                  actions.recordQuiz(score, total);
+                  trackLearningEvent("quiz_complete", {
+                    contentId: quiz.scope === "organ" ? organId : "all-organs",
+                    contentGroup: "anatomy_3d",
+                    language: locale.code,
+                    feature: quiz.mode,
+                  });
+                }}
                 onExit={() => setQuiz(null)}
               />
             )}

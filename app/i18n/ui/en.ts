@@ -277,7 +277,7 @@ export const ui: UiDictionary = {
     storageHeading: "What is stored on your device",
     storageBody: "Structures you mark as learned, specimens you bookmark, quiz scores, study notes, your study streak, and your display preferences are saved in your browser local storage. None of it is uploaded, and none of it is readable by us. Clearing your browser data, or using the reset button on the progress panel, erases all of it permanently.",
     analyticsHeading: "Analytics",
-    analyticsBody: "If aggregate analytics are enabled on this deployment, they record page views and country-level location only. They are not tied to an identity and cannot be traced back to an individual reader.",
+    analyticsBody: "Google Analytics measures page views and learning interactions such as opening a module, marking it studied, completing a quiz, and starting a 3D model. Events contain a fixed content ID, content group, feature and language where applicable; they do not include quiz answers, scores, notes, or patient data. Google may process technical information and cookie identifiers under its privacy terms.",
     adsHeading: "Advertising",
     adsBody: "This site may show advertising to cover hosting. Where ads are served by a third-party network, that network may set cookies or read a device identifier to choose which ad to show and to measure whether it was seen. That behaviour is governed by the network own privacy policy, not this one. In regions that require it, you will be asked for consent before any personalised advertising is served, and declining leaves the site fully usable.",
     childrenHeading: "Younger readers",
