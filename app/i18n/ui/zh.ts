@@ -4,7 +4,7 @@ export const ui: UiPatch = {
   meta: {
     title: "Anatomy Atelier — 像艺术家一样学解剖",
     description:
-      "在互动解剖工作室中探索医学级细节的 3D 器官——心脏、大脑、肺、肝、肾、眼、肠、胰腺与皮肤。",
+      "在互动解剖工作室中探索心脏、大脑、肺、肝、肾、眼、肠、胰腺与皮肤的 3D 模型。旋转器官、查看标注结构，并结合功能说明理解身体各部分如何协同工作。内容用于解剖学学习与复习。",
     ogTitle: "Anatomy Atelier — 像艺术家一样学解剖",
     ogDescription: "通过沉浸式、医学级细节的 3D 标本学习解剖学。",
     imageAlt: "一颗悬浮于基座之上的解剖学心脏标本，旁边是 Anatomy Atelier 字标",

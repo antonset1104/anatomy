@@ -4,7 +4,7 @@ export const ui: UiPatch = {
   meta: {
     title: "Anatomy Atelier — 예술가처럼 배우는 해부학",
     description:
-      "심장, 뇌, 폐, 간, 콩팥, 눈, 장, 이자, 피부까지 — 의학적으로 정밀한 3D 장기를 인터랙티브 해부 아틀리에에서 살펴보세요.",
+      "심장, 뇌, 폐, 간, 콩팥, 눈, 장, 이자, 피부의 3D 모형을 살펴보세요. 장기를 돌려 보며 표시된 구조와 기능을 읽고, 신체의 각 부분이 어떻게 연결되는지 학습할 수 있습니다. 해부학 학습과 복습을 위한 자료입니다.",
     ogTitle: "Anatomy Atelier — 예술가처럼 배우는 해부학",
     ogDescription: "몰입감 있고 의학적으로 정밀한 3D 표본으로 해부학을 배웁니다.",
     imageAlt: "받침대 위에 떠 있는 해부학적 심장 표본과 Anatomy Atelier 로고",

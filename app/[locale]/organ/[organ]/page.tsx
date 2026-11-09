@@ -31,6 +31,19 @@ const localizedOrganTitles: Record<string, string> = {
   ko: "{organ}: 해부 구조와 3D 모델",
 };
 
+const localizedOrganSummaries: Record<string, string> = {
+  es: " Gira el modelo 3D para reconocer las estructuras etiquetadas y relacionar su forma con la función del órgano.",
+  hi: " 3D मॉडल को घुमाकर नामांकित संरचनाओं और इस अंग के कार्य के बीच संबंध समझें।",
+  zh: " 旋转 3D 模型，查看标注结构，并了解这些结构与器官功能的关系。",
+  ar: " أدر النموذج ثلاثي الأبعاد لتتعرف إلى الأجزاء المسمّاة وعلاقتها بوظيفة العضو.",
+  pt: " Gire o modelo 3D para reconhecer as estruturas identificadas e relacionar sua forma à função do órgão.",
+  fr: " Faites pivoter le modèle 3D pour identifier les structures légendées et relier leur forme à la fonction de l'organe.",
+  de: " Drehe das 3D-Modell, erkenne die beschrifteten Strukturen und verbinde ihre Form mit der Funktion des Organs.",
+  ja: " 3D モデルを回転させてラベル付きの構造を確認し、形と臓器の働きの関係を学べます。",
+  ru: " Вращайте 3D-модель, изучайте подписанные структуры и связывайте их форму с функцией органа.",
+  ko: " 3D 모형을 돌려 표시된 구조를 확인하고 형태와 장기 기능의 관계를 학습하세요.",
+};
+
 export function generateStaticParams({ params }: { params: { locale?: string } } = { params: {} }) {
   return (params.locale ? [params.locale] : localeCodes).flatMap((locale) => organIds.map((organ) => ({ locale, organ })));
 }
@@ -61,7 +74,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     title: format(localizedOrganTitles[config.code] ?? t.seo.organTitle, { organ: organ.name }),
     // The dictionary description is a full sentence already, so the template
     // extends it rather than replacing it — no keyword-stuffed boilerplate.
-    description: (localizedOrganTitles[config.code] ? organ.description : format(t.seo.organDescription, {
+    description: (localizedOrganTitles[config.code] ? `${organ.description}${localizedOrganSummaries[config.code] ?? ""}` : format(t.seo.organDescription, {
       description: organ.description,
       count: organ.hotspots.length,
       organ: organ.name,
