@@ -18,6 +18,19 @@ import { MetricBar } from "../../../components/primitives";
 
 type Params = { locale: string; organ: string };
 
+const localizedOrganTitles: Record<string, string> = {
+  es: "{organ}: anatomía y modelo 3D",
+  hi: "{organ}: शरीर रचना और 3D मॉडल",
+  zh: "{organ}：解剖结构与 3D 模型",
+  ar: "{organ}: التشريح ونموذج ثلاثي الأبعاد",
+  pt: "{organ}: anatomia e modelo 3D",
+  fr: "{organ} : anatomie et modèle 3D",
+  de: "{organ}: Anatomie und 3D-Modell",
+  ja: "{organ}：解剖構造と3Dモデル",
+  ru: "{organ}: анатомия и 3D-модель",
+  ko: "{organ}: 해부 구조와 3D 모델",
+};
+
 export function generateStaticParams({ params }: { params: { locale?: string } } = { params: {} }) {
   return (params.locale ? [params.locale] : localeCodes).flatMap((locale) => organIds.map((organ) => ({ locale, organ })));
 }
@@ -45,15 +58,15 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     locale: config,
     path: `/organ/${organ.id}`,
     type: "article",
-    title: format(t.seo.organTitle, { organ: organ.name }),
+    title: format(localizedOrganTitles[config.code] ?? t.seo.organTitle, { organ: organ.name }),
     // The dictionary description is a full sentence already, so the template
     // extends it rather than replacing it — no keyword-stuffed boilerplate.
-    description: format(t.seo.organDescription, {
+    description: (localizedOrganTitles[config.code] ? organ.description : format(t.seo.organDescription, {
       description: organ.description,
       count: organ.hotspots.length,
       organ: organ.name,
       latin: organ.scientificName,
-    }).slice(0, 300),
+    })).slice(0, 300),
     image: organ.illustrated
       ? { url: `/anatomy/${organ.id}/organ.webp`, alt: `${organ.name} — ${organ.scientificName}`, width: 1024, height: 1024 }
       : undefined,

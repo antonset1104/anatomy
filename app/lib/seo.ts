@@ -41,17 +41,21 @@ export function absolute(path: string) {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/**
- * Every page exists in twelve languages, so each one has to advertise the other
- * eleven. Without this the locales read as duplicates of each other and only one
- * survives in the index.
- */
+const fullyTranslatedLocales = new Set(["en", "id"]);
+
+export function indexableLocalesFor(path: string): string[] {
+  return path === "" || path.startsWith("/organ/")
+    ? locales.map((entry) => entry.code)
+    : locales.filter((entry) => fullyTranslatedLocales.has(entry.code)).map((entry) => entry.code);
+}
+
+/** Advertise only translations whose page copy is complete enough to index. */
 export function alternatesFor(locale: string, path: string): Metadata["alternates"] {
   const suffix = path === "" ? "" : path.startsWith("/") ? path : `/${path}`;
   return {
     canonical: `/${locale}${suffix}`,
     languages: {
-      ...Object.fromEntries(locales.map((entry) => [entry.code, `/${entry.code}${suffix}`])),
+      ...Object.fromEntries(indexableLocalesFor(suffix).map((code) => [code, `/${code}${suffix}`])),
       "x-default": `/en${suffix}`,
     },
   };
@@ -82,6 +86,7 @@ export function pageMetadata({ locale, path, title, description, image, type = "
     ? { url: image.url, alt: image.alt, width: image.width ?? 1200, height: image.height ?? 675 }
     : { url: "/og.jpg", alt: siteName, width: 1200, height: 675 };
   const full = brandedTitle(title);
+  const pageIndexable = isIndexable && indexableLocalesFor(path).includes(locale.code);
 
   return {
     metadataBase: new URL(siteUrl),
@@ -90,14 +95,14 @@ export function pageMetadata({ locale, path, title, description, image, type = "
     description,
     applicationName: siteName,
     alternates: alternatesFor(locale.code, path),
-    robots: isIndexable
+    robots: pageIndexable
       ? { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 }
-      : { index: false, follow: false },
+      : { index: false, follow: isIndexable },
     openGraph: {
       type,
       siteName,
       locale: locale.intl,
-      alternateLocale: locales.filter((entry) => entry.code !== locale.code).map((entry) => entry.intl),
+      alternateLocale: locales.filter((entry) => entry.code !== locale.code && indexableLocalesFor(path).includes(entry.code)).map((entry) => entry.intl),
       url: absolute(`/${locale.code}${path}`),
       title: full,
       description,

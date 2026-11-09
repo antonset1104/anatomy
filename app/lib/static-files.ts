@@ -1,7 +1,7 @@
-import { localeCodes, locales } from "../i18n/config";
+import { locales } from "../i18n/config";
 import { organIds, systemIds } from "./anatomy-data";
 import { REVIEWED_DATE } from "./content-meta";
-import { absolute, isIndexable } from "./seo";
+import { absolute, indexableLocalesFor, isIndexable } from "./seo";
 import { studyLanguages, studyModuleIds, STUDY_UPDATED } from "./medical-study";
 
 /**
@@ -69,9 +69,8 @@ function escapeXml(value: string) {
 }
 
 /**
- * Every URL declares its eleven translations with `xhtml:link` alternates.
- * That is what stops the locales from being read as duplicates — the same job
- * the `hreflang` tags do in the head, repeated here because crawlers use both.
+ * Each indexable URL advertises only its indexable translations, matching the
+ * `hreflang` tags in the page head.
  *
  * Returns `null` when the build is not indexable, matching the Route Handler
  * this replaced: a non-production build should not hand a crawler a list of
@@ -81,8 +80,9 @@ export function sitemapXml(): string | null {
   if (!isIndexable) return null;
 
   const urls = SITEMAP_ENTRIES.flatMap((entry) =>
-    (entry.languages ?? localeCodes).map((locale) => {
-      const alternates = locales.filter(other => !entry.languages || entry.languages.includes(other.code))
+    (entry.languages ?? indexableLocalesFor(entry.path("en").slice(3))).map((locale) => {
+      const allowedLanguages = entry.languages ?? indexableLocalesFor(entry.path("en").slice(3));
+      const alternates = locales.filter(other => allowedLanguages.includes(other.code))
         .map(
           (other) =>
             `    <xhtml:link rel="alternate" hreflang="${other.code}" href="${escapeXml(absolute(entry.path(other.code)))}"/>`,

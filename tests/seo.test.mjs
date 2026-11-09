@@ -87,10 +87,11 @@ test("every page declares a canonical that points at itself", async () => {
   }
 });
 
-test("every page offers all twelve translations plus x-default", async () => {
+test("only translated indexable pages advertise language alternates", async () => {
   for (const path of ["/en", "/en/organ/heart", "/en/systems/cardiovascular", "/en/glossary"]) {
     const markup = await html(path);
-    for (const locale of locales) {
+    const expectedLocales = path === "/en" || path.startsWith("/en/organ/") ? locales : locales.filter(locale => ["en", "id"].includes(locale.code));
+    for (const locale of expectedLocales) {
       const expected = `${ORIGIN}${path.replace("/en", `/${locale.code}`)}`;
       assert.ok(
         markup.includes(`hrefLang="${locale.code}" href="${expected}"`) ||
@@ -98,6 +99,7 @@ test("every page offers all twelve translations plus x-default", async () => {
         `${path} is missing an alternate for ${locale.code}`,
       );
     }
+    if (expectedLocales.length === 2) assert.doesNotMatch(markup.split("</head>")[0], /<link[^>]+hrefLang="ja"|<link[^>]+hreflang="ja"/);
     assert.match(markup, /hrefLang="x-default"|hreflang="x-default"/, `${path} is missing x-default`);
   }
 });
@@ -122,6 +124,14 @@ test("pages allow indexing and large image previews", async () => {
   const robots = markup.match(/<meta name="robots" content="([^"]+)"/)?.[1] ?? "";
   assert.match(robots, /index/);
   assert.match(robots, /max-image-preview:large/);
+});
+
+test("pages with incomplete translations remain accessible but are noindex", async () => {
+  const partial = await html("/ja/about");
+  const robots = partial.match(/<meta name="robots" content="([^"]+)"/)?.[1] ?? "";
+  assert.match(robots, /noindex/);
+  assert.match(robots, /follow/);
+  assert.doesNotMatch(partial.split("</head>")[0], /<link[^>]+hreflang="ja"/i);
 });
 
 test("organ pages describe themselves as medical reference material", async () => {
@@ -187,14 +197,15 @@ test("robots.txt allows crawling and points at the sitemap", async () => {
   assert.equal(body.match(/^Sitemap: (.+)$/m)?.[1], `${ORIGIN}/sitemap.xml`);
 });
 
-test("the sitemap lists every page in every locale with its alternates", async () => {
+test("the sitemap lists only indexable translations with matching alternates", async () => {
   const body = await readStaticFile("sitemap.xml");
   assert.ok(body, "sitemap.xml should exist in an indexable build");
 
   const locs = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  const perLocale = 7 + organIds.length + systemIds.length;
+  const translatedPerLocale = 6 + systemIds.length;
+  const allLocalePages = 1 + organIds.length;
   const studyPages = studyLanguages.length * (1 + studyModuleIds.length);
-  assert.equal(locs.length, perLocale * localeCodes.length + studyPages);
+  assert.equal(locs.length, translatedPerLocale * 2 + allLocalePages * localeCodes.length + studyPages);
   assert.equal(new Set(locs).size, locs.length, "the sitemap repeats a URL");
 
   for (const organ of organIds) {
@@ -203,12 +214,14 @@ test("the sitemap lists every page in every locale with its alternates", async (
   }
   assert.ok(locs.includes(`${ORIGIN}/en`));
   assert.ok(locs.includes(`${ORIGIN}/en/privacy`));
+  assert.ok(!locs.includes(`${ORIGIN}/ja/privacy`));
+  assert.ok(!locs.includes(`${ORIGIN}/ja/systems`));
 
   // Alternates are what stop twelve languages reading as twelve duplicates.
   assert.match(body, /xmlns:xhtml="http:\/\/www\.w3\.org\/1999\/xhtml"/);
   assert.match(body, /hreflang="x-default"/);
   const alternates = [...body.matchAll(/<xhtml:link /g)];
-  assert.equal(alternates.length, perLocale * localeCodes.length * (localeCodes.length + 1) + studyPages * (studyLanguages.length + 1));
+  assert.equal(alternates.length, translatedPerLocale * 2 * 3 + allLocalePages * localeCodes.length * (localeCodes.length + 1) + studyPages * (studyLanguages.length + 1));
   assert.ok(!locs.some(url => url.endsWith('/donate')), "donation pages should not be indexed");
   assert.ok(!locs.includes(`${ORIGIN}/ja/study`), "language availability pages should not be indexed");
 });
