@@ -97,6 +97,11 @@ export default async function OrganPage({ params }: { params: Promise<Params> })
   const related = organ.related
     .map((id) => organs.find((item) => item.id === id))
     .filter((item): item is (typeof organs)[number] => Boolean(item));
+  const focusedStudy = organ.id === "eyeball"
+    ? { href: `https://eye.vijeron.com/study/${locale}`, label: locale === "id" ? "Pelajari anatomi mata lebih lanjut" : "Explore the eye study hub", description: locale === "id" ? "Modul terarah tentang jalur cahaya, refraksi, saraf optik, dan pemeriksaan mata." : "Guided lessons on the light path, refraction, optic nerve, and eye examinations." }
+    : organ.id === "brain"
+      ? { href: `https://ear.vijeron.com/study/${locale}`, label: locale === "id" ? "Pelajari telinga dan pendengaran" : "Explore the ear study hub", description: locale === "id" ? "Modul terarah tentang jalur bunyi, koklea, audiogram, dan sistem vestibular." : "Guided lessons on the sound path, cochlea, audiograms, and vestibular system." }
+      : null;
 
   const trail = [
     { name: t.site.home, path: routes.studio(locale) },
@@ -267,6 +272,14 @@ export default async function OrganPage({ params }: { params: Promise<Params> })
                   </Link>
                 ))}
               </div>
+            </section>
+          )}
+
+          {focusedStudy && (locale === "id" || locale === "en") && (
+            <section aria-labelledby="focused-study">
+              <h2 id="focused-study">{locale === "id" ? "Belajar lebih mendalam" : "Continue learning"}</h2>
+              <p>{focusedStudy.description}</p>
+              <a href={focusedStudy.href}>{focusedStudy.label} <ArrowRight size={13} aria-hidden="true" /></a>
             </section>
           )}
 
