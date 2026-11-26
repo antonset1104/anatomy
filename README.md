@@ -125,22 +125,10 @@ build time, by `npm run seo:generate` — see "Hosting" below for why.
 
 ### Ads
 
-Nothing is hard-coded and nothing loads by default. Set
-`NEXT_PUBLIC_ADSENSE_CLIENT` plus the slot ids (see `.env.example`) and:
-
-- reserved-height containers appear on the content pages — never in the studio,
-  where an ad would sit on top of the thing the reader came for;
-- the network script is injected once, lazily, when the first slot comes within a
-  screen of the viewport, so it is never in front of the page's own LCP;
-- `/ads.txt` starts serving, generated from the publisher id rather than
-  committed, so the repository never carries someone else's account number.
-
-For another approved network, add only its supplied seller records to
-`ADS_TXT_EXTRA_RECORDS`. This generates `/ads.txt` even while AdSense is unset;
-the network's ad tag and approval remain separate setup steps.
-
-With the publisher id unset, `AdSlot` renders `null` — not an empty box — so an
-unmonetised deployment has no holes in its layout and ships no ad code at all.
+Monetag delivery is configured by the shared Vijeron edge Worker. This site
+does not inject an AdSense loader or reserve empty AdSense slots. Only add
+seller records to `ADS_TXT_EXTRA_RECORDS` when the network supplies them;
+that setting generates `/ads.txt` but does not activate ads by itself.
 
 ### Before applying to an ad network
 

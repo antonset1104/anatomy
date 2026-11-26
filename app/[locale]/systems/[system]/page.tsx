@@ -12,8 +12,6 @@ import { breadcrumbGraph, pageMetadata, systemPageGraph } from "../../../lib/seo
 import { REVIEWED_DATE } from "../../../lib/content-meta";
 import { Breadcrumbs, ReviewedNote, SiteFooter, SiteHeader, StudioCta } from "../../../components/SiteChrome";
 import { StructuredData } from "../../../components/StructuredData";
-import { AdSlot } from "../../../components/AdSlot";
-import { adConfig } from "../../../lib/ads";
 
 type Params = { locale: string; system: string };
 
@@ -53,7 +51,6 @@ export default async function SystemPage({ params }: { params: Promise<Params> }
   if (!resolved) notFound();
   const { config, t, organs, byId, system } = resolved;
   const locale = config.code;
-  const ads = adConfig();
   const members = system.organs.map((id) => byId[id]).filter(Boolean);
 
   const trail = [
@@ -127,7 +124,6 @@ export default async function SystemPage({ params }: { params: Promise<Params> }
             </div>
           </section>
 
-          <AdSlot client={ads.client} slot={ads.article} format="inline" label={t.ads.label} />
 
           <section aria-labelledby="structures">
             <h2 id="structures">{t.article.structures}</h2>

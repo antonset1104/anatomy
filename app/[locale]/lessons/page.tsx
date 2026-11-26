@@ -11,8 +11,6 @@ import { routes, studioLink } from "../../lib/routes";
 import { breadcrumbGraph, learningResourceGraph, pageMetadata } from "../../lib/seo";
 import { Breadcrumbs, SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { StructuredData } from "../../components/StructuredData";
-import { AdSlot } from "../../components/AdSlot";
-import { adConfig } from "../../lib/ads";
 import { studentNav } from "../../lib/student-ui";
 
 type Params = { locale: string };
@@ -40,7 +38,6 @@ export default async function LessonsPage({ params }: { params: Promise<Params> 
   const { ui: t, organs: content } = await getDictionary(locale);
   const organs = buildOrgans(content, t);
   const lessons = buildLessons(organs);
-  const ads = adConfig();
 
   const trail = [
     { name: t.site.home, path: routes.studio(locale) },
@@ -80,7 +77,6 @@ export default async function LessonsPage({ params }: { params: Promise<Params> 
         </header>
         <p><Link className="studio-cta" href={routes.study(locale)}>{studentNav[locale].study} →</Link></p>
 
-        <AdSlot client={ads.client} slot={ads.listing} format="leaderboard" label={t.ads.label} />
 
         <div className="hub-grid">
           {lessons.map((lesson) => {

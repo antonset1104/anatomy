@@ -12,8 +12,6 @@ import { anatomyPageGraph, breadcrumbGraph, pageMetadata } from "../../../lib/se
 import { REVIEWED_DATE } from "../../../lib/content-meta";
 import { Breadcrumbs, ReviewedNote, SiteFooter, SiteHeader, StudioCta } from "../../../components/SiteChrome";
 import { StructuredData } from "../../../components/StructuredData";
-import { AdSlot } from "../../../components/AdSlot";
-import { adConfig } from "../../../lib/ads";
 import { MetricBar } from "../../../components/primitives";
 
 type Params = { locale: string; organ: string };
@@ -91,7 +89,6 @@ export default async function OrganPage({ params }: { params: Promise<Params> })
   if (!resolved) notFound();
   const { config, t, organ, organs, systems } = resolved;
   const locale = config.code;
-  const ads = adConfig();
 
   const system = systems.find((entry) => entry.id === organ.systemId);
   const related = organ.related
@@ -200,7 +197,6 @@ export default async function OrganPage({ params }: { params: Promise<Params> })
             </dl>
           </section>
 
-          <AdSlot client={ads.client} slot={ads.article} format="inline" label={t.ads.label} />
 
           <section aria-labelledby="structures">
             <h2 id="structures">{t.article.structures}</h2>

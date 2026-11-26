@@ -435,38 +435,6 @@
 .glossary-organ { display: block; margin-top: 3px; font-size: var(--text-3xs); }
 .glossary-organ a { color: var(--accent-ink); text-decoration: none; }
 
-/* -------------------------------------------------------------------- ads */
-
-/* Height is reserved before the network answers, so a fill never pushes the
-   article down — CLS is both a ranking signal and a reading annoyance. */
-.ad-slot {
-  display: block;
-  margin: var(--space-6) 0;
-  text-align: center;
-}
-
-.ad-label {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--faint);
-  font-size: var(--text-3xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-}
-
-.ad-frame {
-  min-height: var(--ad-height);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-}
-
-.ad-frame .adsbygoogle { width: 100%; }
-
 /* ----------------------------------------------------------------- footer */
 
 .site-footer {
@@ -516,7 +484,7 @@
 }
 
 @media print {
-  .site-header, .site-footer, .breadcrumbs, .studio-cta, .ad-slot { display: none !important; }
+  .site-header, .site-footer, .breadcrumbs, .studio-cta { display: none !important; }
   .content-page { max-width: none; padding: 0; }
 }
 

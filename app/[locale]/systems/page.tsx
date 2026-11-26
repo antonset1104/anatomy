@@ -10,8 +10,6 @@ import { routes } from "../../lib/routes";
 import { breadcrumbGraph, collectionGraph, pageMetadata } from "../../lib/seo";
 import { Breadcrumbs, SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { StructuredData } from "../../components/StructuredData";
-import { AdSlot } from "../../components/AdSlot";
-import { adConfig } from "../../lib/ads";
 
 type Params = { locale: string };
 
@@ -39,7 +37,6 @@ export default async function SystemsPage({ params }: { params: Promise<Params> 
   const organs = buildOrgans(content, t);
   const byId = indexOrgans(organs);
   const systems = buildSystems(t);
-  const ads = adConfig();
 
   const trail = [
     { name: t.site.home, path: routes.studio(locale) },
@@ -99,7 +96,6 @@ export default async function SystemsPage({ params }: { params: Promise<Params> 
           })}
         </div>
 
-        <AdSlot client={ads.client} slot={ads.listing} format="leaderboard" label={t.ads.label} />
       </main>
 
       <SiteFooter

@@ -111,25 +111,9 @@ export function sitemapXml(): string | null {
   ].join("\n");
 }
 
-/** Google's fixed AdSense/AdX certification authority id. */
-const GOOGLE_TAG_ID = "f08c47fec0942fa0";
-
-/**
- * Returns `null` — meaning "do not write this file" — until at least one
- * authorized seller is configured. A non-AdSense network can supply its own
- * records without requiring an AdSense publisher id.
- */
+/** Returns `null` until an authorized seller record is configured. */
 export function adsTxt(): string | null {
-  const client = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
-  // AdSense ids arrive as `ca-pub-…`; ads.txt wants the bare publisher id.
-  const publisherId = client?.replace(/^ca-/, "").trim();
   const lines: string[] = [];
-  if (publisherId && /^pub-\d{10,20}$/.test(publisherId)) {
-    lines.push(`google.com, ${publisherId}, DIRECT, ${GOOGLE_TAG_ID}`);
-  }
-
-  // Any additional sellers — an ad manager, a mediation partner — as
-  // newline-separated complete ads.txt records. Commas belong to each record.
   const extra = process.env.ADS_TXT_EXTRA_RECORDS;
   if (extra) {
     lines.push(...extra.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));

@@ -10,8 +10,6 @@ import { breadcrumbGraph, collectionGraph, pageMetadata } from "../../lib/seo";
 import { REVIEWED_DATE } from "../../lib/content-meta";
 import { Breadcrumbs, ReviewedNote, SiteFooter, SiteHeader } from "../../components/SiteChrome";
 import { StructuredData } from "../../components/StructuredData";
-import { AdSlot } from "../../components/AdSlot";
-import { adConfig } from "../../lib/ads";
 
 type Params = { locale: string };
 
@@ -38,7 +36,6 @@ export default async function GlossaryPage({ params }: { params: Promise<Params>
   const { ui: t, organs: content } = await getDictionary(locale);
   const organs = buildOrgans(content, t);
   const entries = buildGlossary(organs);
-  const ads = adConfig();
 
   const trail = [
     { name: t.site.home, path: routes.studio(locale) },
@@ -87,7 +84,6 @@ export default async function GlossaryPage({ params }: { params: Promise<Params>
           <p className="hub-meta">{format(t.article.structureCount, { count: entries.length })}</p>
         </header>
 
-        <AdSlot client={ads.client} slot={ads.listing} format="leaderboard" label={t.ads.label} />
 
         {[...groups.entries()].map(([initial, group]) => (
           <section key={initial} className="glossary-group" aria-labelledby={`letter-${initial}`}>
